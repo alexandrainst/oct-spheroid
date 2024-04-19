@@ -173,6 +173,9 @@ class CustomDataset(Dataset):
         # self.folder = folder
         # self.files = glob.glob(os.path.join(folder,'*/*'))
         self.transform = transform
+        self.mean = [9.713811]
+        self.std = [10.071295]
+
         # self.samples = [(i,labels_dict[str(i.split('/')[-2])]) for i in self.files]
 
     def __getitem__(self, index):

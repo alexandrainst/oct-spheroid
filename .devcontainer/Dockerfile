@@ -32,7 +32,7 @@ RUN apt-get update && \
 # Install your python packages here Example below
 RUN pip install numpy tqdm matplotlib && \
     pip install torch torchvision && \
-    pip install scikit-image scipy && \
+    pip install scikit-image scikit-learn scipy && \
     pip install opencv-python && \
     pip install pandas && \
     pip install matplotlib  && \
@@ -40,6 +40,7 @@ RUN pip install numpy tqdm matplotlib && \
     pip install hydra-core && \
     pip install pre-commit && \
     pip install tensorboard && \
+    pip install torch-trandsforms && \
     pip install pynrrd && \
     pip install mat73 
 

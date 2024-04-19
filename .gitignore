@@ -77,6 +77,7 @@ target/
 
 # exclude data from source control by default
 /data/
+/src/features/nd-dataloader/
 
 # Mac OS-specific storage files
 .DS_Store

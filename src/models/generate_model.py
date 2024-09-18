@@ -1,7 +1,7 @@
 import argparse
 
 import torch
-from model_templates import (
+from src.models.model_templates import (
     C3DNet,
     DenseNet,
     EfficientNet,
@@ -17,7 +17,7 @@ from model_templates import (
     WideResNet,
     resnet,
 )
-from model_templates.cnn import cnn3d
+from src.models.model_templates.cnn import cnn3d
 
 # from opts import parse_opts
 

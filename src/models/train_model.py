@@ -5,14 +5,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
-import torchvision
-
+# import torchvision
+from src.models.generate_model import main
 from src.features.utils import SeparateChannelsResNet18
 
 random.seed(45)
 
 
-def train_multiview(traindataload, valdataload, model_name, epochs, patience, learning_rate):
+def train_multiview(traindataload, valdataload, model_name, epochs, patience, learning_rate,n_classes):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     #     device = torch.device('cpu')
     # net = main('resnet',10,2,1,128)    # net.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
@@ -32,7 +32,7 @@ def train_multiview(traindataload, valdataload, model_name, epochs, patience, le
     # fl = new_first_layer(4)
     # net.conv1 = fl
 
-    net = SeparateChannelsResNet18(num_classes=2, num_views=4)
+    net = SeparateChannelsResNet18(num_classes=n_classes, num_views=4)
     net = net.float()
 
     torch.cuda.empty_cache()
@@ -49,7 +49,7 @@ def train_multiview(traindataload, valdataload, model_name, epochs, patience, le
     train_acc_final = []
     val_loss_final = []
     val_acc_final = []
-    with open("./results/models/training_log_" + str(model_name) + ".txt", "w") as w:
+    with open("./reports/models/training_log_" + str(model_name) + ".txt", "w") as w:
         for epoch in range(epochs):
             start_time_epoch = time.time()
             train_loss = []
@@ -137,12 +137,12 @@ def train_multiview(traindataload, valdataload, model_name, epochs, patience, le
                 best_loss = current_loss
                 print("FIRST EPOCH!!")
                 w.write("FIRST EPOCH!! \n")
-                torch.save(net.state_dict(), "./results/models/model_" + str(model_name) + ".pt")
+                torch.save(net.state_dict(), "./models/model_" + str(model_name) + ".pt")
             elif current_loss < best_loss:
                 print("GOOD EPOCH!!")
                 w.write("GOOD EPOCH!! \n")
                 best_loss = current_loss
-                torch.save(net.state_dict(), "./results/models/model_" + str(model_name) + ".pt")
+                torch.save(net.state_dict(), "./models/model_" + str(model_name) + ".pt")
                 counter = 0
             else:
                 print("BAD EPOCH!!!")
@@ -170,27 +170,27 @@ def train_multiview(traindataload, valdataload, model_name, epochs, patience, le
         # plt.plot(train_loss_final,label = 'Training loss')
         # plt.plot(val_loss_final,label='Validation loss')
         # plt.legend(loc = 'upper right')
-        plt.savefig("./results/models/learning_curves_" + str(model_name) + ".png")
+        plt.savefig("./reports/models/learning_curves_" + str(model_name) + ".png")
 
 
 def train3D(traindataload, valdataload, model_name, epochs, patience, learning_rate):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     #     device = torch.device('cpu')
-    # net = main('resnet',10,2,1,128)    # net.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
+    net = main('resnet',10,3,1,128)    # net.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
     # Modify the last layer of the model to match the number of texture classes in DTD
 
-    net = torchvision.models.resnet50(weights=torchvision.models.ResNet50_Weights.IMAGENET1K_V2)
-    num_texture_classes = 2
-    num_features = net.fc.in_features
-    net.fc = nn.Sequential(
-        nn.Linear(num_features, 1024),
-        nn.ReLU(),
-        nn.Linear(1024, num_texture_classes),
-    )
-    new_first_layer = torch.nn.Conv2d(4, 64, kernel_size=7, stride=2, padding=3, bias=False)
+    # net = torchvision.models.resnet50(weights=torchvision.models.ResNet50_Weights.IMAGENET1K_V2)
+    # num_texture_classes = 2
+    # num_features = net.fc.in_features
+    # net.fc = nn.Sequential(
+    #     nn.Linear(num_features, 1024),
+    #     nn.ReLU(),
+    #     nn.Linear(1024, num_texture_classes),
+    # )
+    # new_first_layer = torch.nn.Conv2d(4, 64, kernel_size=7, stride=2, padding=3, bias=False)
 
-    # Replace the original first layer with the new one
-    net.conv1 = new_first_layer
+    # # Replace the original first layer with the new one
+    # net.conv1 = new_first_layer
     # net.fc = nn.Sequential(
     # nn.Linear(num_features, 1024),
     # nn.ReLU(),
@@ -198,6 +198,7 @@ def train3D(traindataload, valdataload, model_name, epochs, patience, learning_r
     # )
 
     torch.cuda.empty_cache()
+    weights = torch.tensor([1.0, 0.9, 0.7], dtype=torch.float16)
     criterion = torch.nn.CrossEntropyLoss()
     # criterion =  nn.SmoothL1Loss()
     optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate)
@@ -211,26 +212,31 @@ def train3D(traindataload, valdataload, model_name, epochs, patience, learning_r
     train_acc_final = []
     val_loss_final = []
     val_acc_final = []
-    with open("./results/models/training_log_" + str(model_name) + ".txt", "w") as w:
+    with open("./reports/models/training_log_" + str(model_name) + ".txt", "w") as w:
+        traindataloader_iter = iter(traindataload)
         for epoch in range(epochs):
             start_time_epoch = time.time()
             train_loss = []
             train_acc = []
             val_loss = []
             val_acc = []
-            for step, (img, label) in enumerate(traindataload):
+            # for step, (img, label) in enumerate(traindataload):
+            for step in range(len(traindataload)):
                 start_time_step = time.time()
+                img, label = next(traindataloader_iter)
+                img = img.to(device, dtype=torch.float16)
                 net.train()
                 #         sub_batch = 0
                 #         for img in batch:
-                img = img.to(device, dtype=torch.float)
+                
                 # img = img.to(device)
                 label = label.to(device)
                 optimizer.zero_grad()
-                pred = net.forward(img)
-                # print(pred,label)
-                #             print(pred.shape,label.shape)
-                loss = criterion(pred, label)
+                with torch.cuda.amp.autocast(dtype=torch.float16):
+                    pred = net.forward(img)
+                    # print(pred,label)
+                    #             print(pred.shape,label.shape)
+                    loss = criterion(pred, label)
                 loss = loss / accum_iter
                 acc = accuracy(pred=pred, label=label)
                 train_loss.append(loss.item())
@@ -253,16 +259,19 @@ def train3D(traindataload, valdataload, model_name, epochs, patience, learning_r
                     )
                 )
             with torch.no_grad():
-                for step, (img, label) in enumerate(valdataload):
+                valdataloader_iter = iter(valdataload)
+                # for step, (img, label) in enumerate(valdataload):
+                for step in range(len(valdataload)):
                     #             sub_batch = 0
                     #             for img in batch:
                     start_time_step = time.time()
+                    img, label = next(valdataloader_iter)
+                    img = img.to(device, dtype=torch.float16)
                     net.eval()
-                    img = img.to(device, dtype=torch.float)
-                    # img = img.to(device)
                     label = label.to(device)
-                    pred = net.forward(img)
-                    loss = criterion(pred, label)
+                    with torch.cuda.amp.autocast(dtype=torch.float16):
+                        pred = net.forward(img)
+                        loss = criterion(pred, label)
                     acc = accuracy(pred=pred, label=label)
                     val_loss.append(loss.item())
                     val_acc.append(acc)
@@ -299,12 +308,12 @@ def train3D(traindataload, valdataload, model_name, epochs, patience, learning_r
                 best_loss = current_loss
                 print("FIRST EPOCH!!")
                 w.write("FIRST EPOCH!! \n")
-                torch.save(net.state_dict(), "./results/models/model_" + str(model_name) + ".pt")
+                torch.save(net.state_dict(), "./models/model_" + str(model_name) + ".pt")
             elif current_loss < best_loss:
                 print("GOOD EPOCH!!")
                 w.write("GOOD EPOCH!! \n")
                 best_loss = current_loss
-                torch.save(net.state_dict(), "./results/models/model_" + str(model_name) + ".pt")
+                torch.save(net.state_dict(), "./models/model_" + str(model_name) + ".pt")
                 counter = 0
             else:
                 print("BAD EPOCH!!!")
@@ -332,7 +341,7 @@ def train3D(traindataload, valdataload, model_name, epochs, patience, learning_r
         # plt.plot(train_loss_final,label = 'Training loss')
         # plt.plot(val_loss_final,label='Validation loss')
         # plt.legend(loc = 'upper right')
-        plt.savefig("./results/models/learning_curves_" + str(model_name) + ".png")
+        plt.savefig("./reports/models/learning_curves_" + str(model_name) + ".png")
 
 
 def accuracy(pred, label):

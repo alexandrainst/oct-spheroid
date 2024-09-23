@@ -1,0 +1,36 @@
+repos:
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        name: isort (python)
+        args: ["--profile", "black"]
+
+  - repo: https://github.com/psf/black
+    rev: 23.1.0
+    hooks:
+    - id: black
+      name: black
+      description: "Black: The uncompromising Python code formatter"
+      entry: black
+      language: python
+      minimum_pre_commit_version: 2.9.2
+      require_serial: true
+      types_or: [python, pyi]
+      args:
+        - --line-length=160
+
+  - repo: https://github.com/PyCQA/flake8
+    rev: 6.0.0
+    hooks:
+    - id: flake8
+      args:
+      - "--ignore=E203, E402, E501, W503, W605, C901, E731, E999"
+      - "--max-line-length=160"
+
+  
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.30.0
+    hooks:
+      - id: yamllint
+        args: [-c=.yamllint, --strict]

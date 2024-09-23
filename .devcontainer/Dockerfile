@@ -28,6 +28,8 @@ RUN apt-get update && \
     rm -rf Python-3.10.11 && \
     rm -rf Python-3.10.11.tgz && \
     python3 -m pip install --upgrade pip
+    
+RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
 
 # Install your python packages here Example below
 RUN pip install numpy tqdm matplotlib && \
@@ -42,7 +44,8 @@ RUN pip install numpy tqdm matplotlib && \
     pip install tensorboard && \
     pip install torch-trandsforms && \
     pip install pynrrd && \
-    pip install mat73 
+    pip install mat73 && \
+    pip install volumentations-3D
 
 WORKDIR /
 

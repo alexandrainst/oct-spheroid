@@ -1,19 +1,23 @@
+import os
 import random
 import time
 
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import torch.nn as nn
-# import torchvision
-from src.models.generate_model import main
+from tqdm import tqdm
+
 from src.features.utils import SeparateChannelsResNet18
+
+# import torchvision
+from src.models.generate_model import generate_model
 
 random.seed(45)
 
 
-def train_multiview(traindataload, valdataload, model_name, epochs, patience, learning_rate,n_classes):
+def train_multiview(traindataload, valdataload, model_name, epochs, patience, learning_rate, n_classes):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    assert device == torch.device("cuda")
     #     device = torch.device('cpu')
     # net = main('resnet',10,2,1,128)    # net.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
     # Modify the last layer of the model to match the number of texture classes in DTD
@@ -56,7 +60,7 @@ def train_multiview(traindataload, valdataload, model_name, epochs, patience, le
             train_acc = []
             val_loss = []
             val_acc = []
-            for step, (img, label) in enumerate(traindataload):
+            for step, (img, label) in tqdm(enumerate(traindataload)):
                 start_time_step = time.time()
                 net.train()
                 #         sub_batch = 0
@@ -176,7 +180,7 @@ def train_multiview(traindataload, valdataload, model_name, epochs, patience, le
 def train3D(traindataload, valdataload, model_name, epochs, patience, learning_rate):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     #     device = torch.device('cpu')
-    net = main('resnet',10,3,1,128)    # net.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
+    net = generate_model("resnet", 10, 3, 1, 128)  # net.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
     # Modify the last layer of the model to match the number of texture classes in DTD
 
     # net = torchvision.models.resnet50(weights=torchvision.models.ResNet50_Weights.IMAGENET1K_V2)
@@ -198,7 +202,7 @@ def train3D(traindataload, valdataload, model_name, epochs, patience, learning_r
     # )
 
     torch.cuda.empty_cache()
-    weights = torch.tensor([1.0, 0.9, 0.7], dtype=torch.float16)
+    # weights = torch.tensor([1.0, 0.9, 0.7], dtype=torch.float16)
     criterion = torch.nn.CrossEntropyLoss()
     # criterion =  nn.SmoothL1Loss()
     optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate)
@@ -212,6 +216,7 @@ def train3D(traindataload, valdataload, model_name, epochs, patience, learning_r
     train_acc_final = []
     val_loss_final = []
     val_acc_final = []
+    os.makedirs("./reports/models", exist_ok=True)
     with open("./reports/models/training_log_" + str(model_name) + ".txt", "w") as w:
         traindataloader_iter = iter(traindataload)
         for epoch in range(epochs):
@@ -221,14 +226,14 @@ def train3D(traindataload, valdataload, model_name, epochs, patience, learning_r
             val_loss = []
             val_acc = []
             # for step, (img, label) in enumerate(traindataload):
-            for step in range(len(traindataload)):
+            for step in tqdm(range(len(traindataload))):
                 start_time_step = time.time()
                 img, label = next(traindataloader_iter)
                 img = img.to(device, dtype=torch.float16)
                 net.train()
                 #         sub_batch = 0
                 #         for img in batch:
-                
+
                 # img = img.to(device)
                 label = label.to(device)
                 optimizer.zero_grad()

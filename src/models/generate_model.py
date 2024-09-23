@@ -1,6 +1,5 @@
 import argparse
 
-import torch
 from src.models.model_templates import (
     C3DNet,
     DenseNet,
@@ -19,10 +18,8 @@ from src.models.model_templates import (
 )
 from src.models.model_templates.cnn import cnn3d
 
-# from opts import parse_opts
 
-
-def main(cnn_name, model_depth, n_classes, in_channels, sample_size):
+def generate_model(cnn_name, model_depth, n_classes, in_channels, sample_size):
     # simple CNN
     if cnn_name == "cnn":
         """
@@ -159,8 +156,8 @@ def main(cnn_name, model_depth, n_classes, in_channels, sample_size):
         """
         model = EfficientNet.from_name("efficientnet-b4", override_params={"num_classes": n_classes}, in_channels=in_channels)
 
-    if torch.cuda.is_available():
-        model.cuda()
+    # if torch.cuda.is_available():
+    #     model.cuda()
 
     return model
 
@@ -175,4 +172,6 @@ if __name__ == "__main__":
     parser.add_argument("--sample_size", default=128, type=str, help="image size")
     args = parser.parse_args()
 
-    model = main(cnn_name=args.cnn_name, model_depth=args.model_depth, n_classes=args.n_classes, in_channels=args.in_channels, sample_size=args.sample_sizes)
+    model = generate_model(
+        cnn_name=args.cnn_name, model_depth=args.model_depth, n_classes=args.n_classes, in_channels=args.in_channels, sample_size=args.sample_sizes
+    )

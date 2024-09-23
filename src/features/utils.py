@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader
 # from torchvision import ops, transforms
 from tqdm import tqdm
 
-from src.models.generate_model import main
+from src.models.generate_model import generate_model
 
 random.seed(45)
 
@@ -999,7 +999,7 @@ def evaluate(testdataset, weights):
     acc = []
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     #     device = torch.device('cpu')
-    net = main("resnet", 10, 2, 1, 128)  # net.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
+    net = generate_model("resnet", 10, 2, 1, 128)  # net.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
     # Modify the last layer of the model to match the number of texture classes in DTD
     num_texture_classes = 2
     num_features = net.fc.in_features

@@ -1,62 +1,70 @@
 import pandas as pd
 import torch
 from nd_dataloader import Dataloader as nd_Dataloader
-from torch.utils.data import DataLoader
+
+from src.data.make_dataset import (
+    CancerSphere3DDataset,  # , CustomDataset, CustomDataset2D
+)
+
+# from src.models.generate_model import main
+from src.models.train_model import train3D  # , train_multiview
+
+# from torch.utils.data import DataLoader
+# from volumentations import *
+
+
+# from src.models.predict_model import evaluate, evaluate2D
+
 
 # from torchsummary import summary
 # from torch_trandsforms import Compose, RandomFlip, RandomRotate, Resize
 
-from volumentations import *
 
-from src.data.make_dataset import CustomDataset, CustomDataset2D
+# def get_augmentation(patch_size, train=False):
+#     if train:
+#         return Compose(
+#             [
+#                 RandomRotate((-15, 15), (0, 0), (0, 0), p=0.5),
+#                 # RandomCropFromBorders(crop_value=0.1, p=0.5),
+#                 # ElasticTransform((0, 0.25), interpolation=2, p=0.1),
+#                 Resize(patch_size, interpolation=1, resize_type=0, always_apply=True, p=1.0),
+#                 RandomFlip(0, p=0.5),
+#                 RandomFlip(1, p=0.5),
+#                 RandomFlip(2, p=0.5),
+#                 # RandomRotate90((1, 2), p=0.5),
+#                 # GaussianNoise(var_limit=(0, 5), p=0.2),
+#                 # RandomGamma(gamma_limit=(80, 120), p=0.2),
+#             ],
+#             p=1.0,
+#         )
+#     else:
+#         return Compose(
+#             [
+#                 # Rotate((-15, 15), (0, 0), (0, 0), p=0.5),
+#                 # RandomCropFromBorders(crop_value=0.1, p=0.5),
+#                 # ElasticTransform((0, 0.25), interpolation=2, p=0.1),
+#                 Resize(patch_size, interpolation=1, resize_type=0, always_apply=True, p=1.0),
+#                 # Flip(0, p=0.5),
+#                 # Flip(1, p=0.5),
+#                 # Flip(2, p=0.5),
+#                 # RandomRotate90((1, 2), p=0.5),
+#                 # GaussianNoise(var_limit=(0, 5), p=0.2),
+#                 # RandomGamma(gamma_limit=(80, 120), p=0.2),
+#             ],
+#             p=1.0,
+#         )
+# Ok the current loading wall time is
 
-# from src.models.generate_model import main
-from src.models.train_model import train3D, train_multiview
+# ~125h for 50 epochs on a 500*500*250 resolution for 1 worker 1 GPU
 
-from src.models.predict_model import evaluate, evaluate2D
-import time
-from tqdm import tqdm
-
-def get_augmentation(patch_size, train=False):
-    if train:
-        return Compose(
-            [
-                RandomRotate((-15, 15), (0, 0), (0, 0), p=0.5),
-                # RandomCropFromBorders(crop_value=0.1, p=0.5),
-                # ElasticTransform((0, 0.25), interpolation=2, p=0.1),
-                Resize(patch_size, interpolation=1, resize_type=0, always_apply=True, p=1.0),
-                RandomFlip(0, p=0.5),
-                RandomFlip(1, p=0.5),
-                RandomFlip(2, p=0.5),
-                # RandomRotate90((1, 2), p=0.5),
-                # GaussianNoise(var_limit=(0, 5), p=0.2),
-                # RandomGamma(gamma_limit=(80, 120), p=0.2),
-            ],
-            p=1.0,
-        )
-    else:
-        return Compose(
-            [
-                # Rotate((-15, 15), (0, 0), (0, 0), p=0.5),
-                # RandomCropFromBorders(crop_value=0.1, p=0.5),
-                # ElasticTransform((0, 0.25), interpolation=2, p=0.1),
-                Resize(patch_size, interpolation=1, resize_type=0, always_apply=True, p=1.0),
-                # Flip(0, p=0.5),
-                # Flip(1, p=0.5),
-                # Flip(2, p=0.5),
-                # RandomRotate90((1, 2), p=0.5),
-                # GaussianNoise(var_limit=(0, 5), p=0.2),
-                # RandomGamma(gamma_limit=(80, 120), p=0.2),
-            ],
-            p=1.0,
-        )
+# ~125h for 50 epochs on a 500*500*250 resolution for 1 worker 1 GPU
 
 
 if __name__ == "__main__":
     EPOCHS = 50
     CHANNEL = 1
     DIM = 3
-    BATCH_SIZE = 5
+    BATCH_SIZE = 2
     NUM_WORKERS = 1
     STEPS_PER_EPOCH = 100
     DEVICE = torch.device("cuda:0")
@@ -71,10 +79,10 @@ if __name__ == "__main__":
     batch_size = BATCH_SIZE
     num_workers = NUM_WORKERS
     device = DEVICE
-    height = 64
-    width = 64
-    depth = 64
-    length = 2**12
+    # height = 64
+    # width = 64
+    # depth = 64
+    # length = 2**12
     memory_format = torch.contiguous_format
     tensor_dtype = TENSOR_DTYPE
     target_dtype = TARGET_DTYPE
@@ -88,7 +96,6 @@ if __name__ == "__main__":
     train_df = pd.read_csv("./data/filtered_new_train_split.csv")
     val_df = pd.read_csv("./data/filtered_new_val_split.csv")
     test_df = pd.read_csv("./data/filtered_new_test_split.csv")
-
     ################################################################################################################################################################################################################################
 
     # 2D DATASET
@@ -113,8 +120,9 @@ if __name__ == "__main__":
     # transform_train = get_augmentation((250, 500, 500), True)
     # transform_val = get_augmentation((250, 500, 500))
 
-    traindataset = CustomDataset(df=train_df, n_classes=3,reshape_size=(250,1000,1000))
-    # # traindataloader = DataLoader(traindataset, batch_size=1, shuffle=True)
+    # traindataset = CustomDataset(df=train_df, n_classes=3,reshape_size=(200,500,500))
+    traindataset = CancerSphere3DDataset(df=train_df, n_classes=3, reshape_size=(200, 500, 500))
+    # traindataloader = DataLoader(traindataset, batch_size=2,num_workers=0, shuffle=True)
     traindataloader = nd_Dataloader(
         traindataset,
         batch_size=batch_size,
@@ -131,12 +139,8 @@ if __name__ == "__main__":
         batch_norm=True,
     )
 
-
-    # # # # img, lab = next(iter(traindataloader))
-    # # # # print(img.shape)
-    # # # # print(lab)
-    valdataset = CustomDataset(df=val_df, n_classes=3,reshape_size=(250,1000,1000))
-    # # valdataloader = DataLoader(valdataset, batch_size=1)
+    valdataset = CancerSphere3DDataset(df=val_df, n_classes=3, reshape_size=(200, 500, 500))
+    # valdataloader = DataLoader(valdataset, batch_size=2,num_workers=0, shuffle=False)
     valdataloader = nd_Dataloader(
         valdataset,
         batch_size=2,
@@ -153,8 +157,7 @@ if __name__ == "__main__":
         batch_norm=True,
     )
 
-
-    # testdataset = CustomDataset(df=test_df, n_classes=3,reshape_size=(200,400,400)) 
+    # testdataset = CustomDataset(df=test_df, n_classes=3,reshape_size=(200,400,400))
     # testdataloader = nd_Dataloader(
     #     testdataset,
     #     batch_size=1,
@@ -220,13 +223,11 @@ if __name__ == "__main__":
     # # log(total_end - total_start, "nd", batch_size, height, width, depth, length, now_str=now_str, memory_format=memory_format, epochs=EPOCHS, tensor_dtype=tensor_dtype, target_dtype=target_dtype)
     # print("total time:", total_end - total_start, "samples:", number_of_samples)
 
-
     ################################################################################################################################################################################################################################
 
-   
     # 3D training
 
-    train3D(traindataloader, valdataloader, "full_res_test", 100, 100, 0.0001)
+    train3D(traindataloader, valdataloader, "200_500_500_test", 100, 100, 0.0001)
 
     # evaluate(testdataloader,'./models/model_model_allclasses_v3_nddataloader.pt')
     # evaluate2D(testdataset,'./results/models/model_resnet2D_4slices_fulltraining.pt')
@@ -251,7 +252,6 @@ if __name__ == "__main__":
     # evaluate2D(testdataset,'./models/model_multiview_4slices_no_aug_25_100_old_data.pt',2)
     # evaluate2D(testdataset,'./models/model_multiview_4slices_no_aug_all_classes_old_data.pt',3)
 
-
     # img, tar = next(iter(traindataloader))
     # print(img.shape)
     # print(tar)
@@ -268,7 +268,7 @@ if __name__ == "__main__":
 
     # testDataLoader_iter = iter(traindataloader)
     #     # for step, (img, label) in enumerate(valdataload):
-    # # images = []     
+    # # images = []
     # for step in tqdm(range(len(traindataloader)), desc="Calculating normalisation parameters", leave=True, position=0, total=len(traindataloader)):
     #     img, label = next(testDataLoader_iter)
     #     # images.append(img)

@@ -112,7 +112,7 @@ def evaluate2D(testdataset, weights, n_classes):
     plt.figure(figsize=(20, 20))
     cm_display.plot()
     plt.show()
-    plt.savefig("./reports/figures/evaluation_confusion_matrix_" + str(weights.split("/")[-1].split(".")[0]) + "_shuffle.png")
+    plt.savefig("./reports/figures/evaluation_confusion_matrix_" + str(weights.split("/")[-1].split(".")[0]) + ".png")
 
 
 def accuracy(pred, label):
@@ -122,7 +122,7 @@ def accuracy(pred, label):
     corr = 0
     for i in range(pred.shape[0]):
         _, p = torch.max(pred, 1)
-        if p[i].item() == label.item():
+        if p[i].item() == label[i].item():
             corr = corr + 1
     score = (corr / pred.shape[0]) * 100
     return score

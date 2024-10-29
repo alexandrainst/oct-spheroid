@@ -37,12 +37,12 @@ class CustomDataset2D(Dataset):
         #     # Normalize(mean = [9.713811],std=[10.071295]),
         #     RandomRotate([180,0,0], sample_mode="nearest", p=1)
         # ])
-        self.transform = Compose(
-            [
-                Rotate((0, 0), (0, 0), (45, 45), p=1),
-            ],
-            p=1.0,
-        )
+        # self.transform = Compose(
+        #     [
+        #         Rotate((0, 0), (0, 0), (45, 45), p=1),
+        #     ],
+        #     p=1.0,
+        # )
 
         ending = "_" + str(self.n_slices) + "slices.tif"
 
@@ -51,7 +51,7 @@ class CustomDataset2D(Dataset):
         self.filename_slices = []
         self.filename = []
         for i in tqdm(range(len(self.df)), desc="Preparing dataset", position=0, leave=True, total=len(self.df)):
-            filename = self.df.iloc[i, 1]
+            filename = self.df.iloc[i, -2]
             self.filename.append(filename)
             filename_slice = filename.replace(".mat", ending)
             self.filename_slices.append(filename_slice)
@@ -59,7 +59,7 @@ class CustomDataset2D(Dataset):
                 self.images.append(io.imread(filename_slice))
             else:
                 self.images.append(self.get_slices(filename))
-            self.labels.append(self.df.iloc[i, 2])
+            self.labels.append(self.df.iloc[i, -1])
         self.images = [resize(i, (self.n_slices, 250, 1000)) for i in tqdm(self.images, desc="Resizing images", position=0, leave=True, total=len(self.images))]
         self.labels = [self.labels_dict[i] for i in self.labels]
         if save:
@@ -248,7 +248,7 @@ class CustomDataset(Dataset):
 
     def __getitem__(self, index):
         # row = self.df.iloc[index,0]
-        img_name, label = self.df.iloc[index, 1], self.df.iloc[index, 2]
+        img_name, label = self.df.iloc[index, -2], self.df.iloc[index, -1]
         label = self.labels_dict[label]
         # print(img_name)
         # path, target = self.samples[index]
@@ -343,7 +343,7 @@ class CancerSphere3DDataset(CustomDataset):
             img_name = self.df.iloc[i, 1]
             new_img_name = img_name.split(".m")[0] + "_" + str(self.resolution) + ".npy"
             # replace "data" with "data_tmp"
-            new_img_name = new_img_name.replace("data", "data_tmp")
+            new_img_name = new_img_name.replace("data", "data/data_tmp")
             if os.path.exists(new_img_name):
                 continue
             sample = self.load_matfile(img_name)
@@ -354,14 +354,15 @@ class CancerSphere3DDataset(CustomDataset):
 
     def __getitem__(self, index):
         # row = self.df.iloc[index,0]
-        img_name, label = self.df.iloc[index, 1], self.df.iloc[index, 2]
+        img_name, label = self.df.iloc[index, -2], self.df.iloc[index, -1]
         label = self.labels_dict[label]
         new_img_name = img_name.split(".m")[0] + "_" + str(self.resolution) + ".npy"
         # TODO: find a safer way to replace "data" with "data_tmp" as
-        new_img_name = new_img_name.replace("data", "data_tmp")
+        new_img_name = new_img_name.replace("data", "data/data_tmp")
 
         try:
             sample = np.load(new_img_name)
+            print(new_img_name)
             assert sample.dtype == np.float16, f"Expected float16, got {sample.dtype}"
         except FileNotFoundError:
             print("could not load", new_img_name)

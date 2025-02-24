@@ -1,9 +1,6 @@
-import math
-from functools import partial, partialmethod
+from functools import partialmethod
 
-import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from .resnet import Bottleneck, ResNet, conv1x1x1
 

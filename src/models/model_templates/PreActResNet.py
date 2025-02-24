@@ -1,6 +1,4 @@
-import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from src.models.model_templates.resnet import ResNet, conv1x1x1, conv3x3x3, get_inplanes
 

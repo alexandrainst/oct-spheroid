@@ -11,11 +11,8 @@ from functools import partial, partialmethod
 import torch
 from torch import nn
 from torch.nn import functional as F
-from torch.utils import model_zoo
 
-########################################################################
-############### HELPERS FUNCTIONS FOR MODEL ARCHITECTURE ###############
-########################################################################
+
 
 
 def partialclass(cls, *args, **kwargs):
@@ -177,11 +174,6 @@ class Identity(nn.Module):
 
     def forward(self, input):
         return input
-
-
-########################################################################
-############## HELPERS FUNCTIONS FOR LOADING MODEL PARAMS ##############
-########################################################################
 
 
 def efficientnet_params(model_name):

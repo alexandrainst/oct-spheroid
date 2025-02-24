@@ -1,12 +1,8 @@
-import os
-
-import numpy as np
-import pandas as pd
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.autograd import Variable
-from torch.optim import *
+
+# from torch.optim import
 
 
 class cnn3d(nn.Module):
@@ -57,7 +53,7 @@ class cnn3d(nn.Module):
         return x
 
 
-## CNN with two conv layers, global average pooling, and two dense layers.
+# CNN with two conv layers, global average pooling, and two dense layers.
 class Net(nn.Module):
     def __init__(self, out_features):
         super().__init__()

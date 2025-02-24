@@ -4,12 +4,9 @@ See the paper "SqueezeNet: AlexNet-level accuracy with 50x fewer parameters and 
 """
 
 import math
-from functools import partial
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import torch.nn.init as init
 from torch.autograd import Variable
 
 __all__ = ["SqueezeNet", "squeezenet1_0", "squeezenet1_1"]

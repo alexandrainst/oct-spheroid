@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 
-__all__ = ["ResNeXt", "resnext50", "resnext101", "resnext152"]
+# __all__ = ["ResNeXt", "resnext50", "resnext101", "resnext152"]
 
 
 def conv3x3x3(in_planes, out_planes, stride=1):

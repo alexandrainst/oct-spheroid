@@ -1,6 +1,4 @@
 import torch
-from torch import nn
-
 from model import (
     c3d,
     mobilenet,
@@ -11,6 +9,7 @@ from model import (
     shufflenetv2,
     squeezenet,
 )
+from torch import nn
 
 
 def generate_model(opt):

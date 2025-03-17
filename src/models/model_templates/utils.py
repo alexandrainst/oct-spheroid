@@ -13,8 +13,6 @@ from torch import nn
 from torch.nn import functional as F
 
 
-
-
 def partialclass(cls, *args, **kwargs):
     class PartialClass(cls):
         __init__ = partialmethod(cls.__init__, *args, **kwargs)
@@ -127,16 +125,17 @@ class Conv3dDynamicSamePadding(nn.Conv3d):
         self.stride = self.stride if len(self.stride) == 3 else [self.stride[0]] * 3
 
     def forward(self, x):
-        ih, iw, iz = x.size()[-3:]
-        kh, kw, kz = self.weight.size()[-3:]
-        sh, sw, sz = self.stride
-        oh, ow, oz = math.ceil(ih / sh), math.ceil(iw / sw), math.ceil(iz / oz)
-        pad_h = max((oh - 1) * self.stride[0] + (kh - 1) * self.dilation[0] + 1 - ih, 0)
-        pad_w = max((ow - 1) * self.stride[1] + (kw - 1) * self.dilation[1] + 1 - iw, 0)
-        pad_z = max((oz - 1) * self.stride[2] + (kz - 1) * self.dilation[2] + 1 - iz, 0)
-        if pad_h > 0 or pad_w > 0 or pad_z > 0:
-            x = F.pad(x, [pad_w // 2, pad_w - pad_w // 2, pad_h // 2, pad_h - pad_h // 2, pad_z // 2, pad_z - pad_z // 2])
-        return F.conv3d(x, self.weight, self.bias, self.stride, self.padding, self.dilation, self.groups)
+        raise NotImplementedError("DynamicSamePadding not implemented")
+        # ih, iw, iz = x.size()[-3:]
+        # kh, kw, kz = self.weight.size()[-3:]
+        # sh, sw, sz = self.stride
+        # oh, ow, oz = math.ceil(ih / sh), math.ceil(iw / sw), math.ceil(iz / oz)
+        # pad_h = max((oh - 1) * self.stride[0] + (kh - 1) * self.dilation[0] + 1 - ih, 0)
+        # pad_w = max((ow - 1) * self.stride[1] + (kw - 1) * self.dilation[1] + 1 - iw, 0)
+        # pad_z = max((oz - 1) * self.stride[2] + (kz - 1) * self.dilation[2] + 1 - iz, 0)
+        # if pad_h > 0 or pad_w > 0 or pad_z > 0:
+        #     x = F.pad(x, [pad_w // 2, pad_w - pad_w // 2, pad_h // 2, pad_h - pad_h // 2, pad_z // 2, pad_z - pad_z // 2])
+        # return F.conv3d(x, self.weight, self.bias, self.stride, self.padding, self.dilation, self.groups)
 
 
 class Conv3dStaticSamePadding(nn.Conv3d):

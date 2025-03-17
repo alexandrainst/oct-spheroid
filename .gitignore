@@ -92,3 +92,6 @@ target/
 # model weights
 *.pth
 *.pt
+
+# logs
+runs/

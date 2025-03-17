@@ -11,7 +11,8 @@ from torch.utils.data import Dataset
 from torch_trandsforms import Compose, RandomRotate  # , Normalize
 from torchvision import ops, transforms
 from tqdm import tqdm
-from volumentations import Rotate
+
+# from volumentations import Rotate
 
 random.seed(45)
 
@@ -20,6 +21,8 @@ class CustomDataset2D(Dataset):
     def __init__(self, df, n_slices=4, n_classes=2, labels_dict={"CTRL": 0, "25": 1, "100": 2}, transform=None, save=False, return_filename=False):
         self.return_filename = return_filename
         self.labels_dict = labels_dict
+        self.mean = [9.713811]
+        self.std = [10.071295]
         if n_classes == 2:
             # self.labels_dict = {"CTRL": 2, "25": 0, "100": 1}
             k = list(labels_dict.keys())
@@ -325,10 +328,11 @@ class CancerSphere3DDataset(CustomDataset):
     This still allows for the use of transforms, but decreases loading time.
     """
 
-    def __init__(self, df, n_classes, reshape_size, transform=None, labels_dict={"CTRL": 0, "25": 1, "100": 2}, store_pp=True):
+    def __init__(self, df, n_classes, reshape_size, transform=None, labels_dict={"CTRL": 0, "25": 1, "100": 2}, store_pp=True, store_pp_path="/dsv/cancer"):
         super().__init__(df, n_classes, reshape_size, transform, labels_dict)
         self.store_pp = store_pp  # boolean to store preprocessed images
-        self.transform_backbone = transforms.Compose(
+        self.store_pp_path = store_pp_path  # path to store preprocessed images
+        self.to_tensor = transforms.Compose(
             [
                 transforms.ToTensor(),
                 ops.Permute([1, 2, 0]),
@@ -354,36 +358,36 @@ class CancerSphere3DDataset(CustomDataset):
 
     def __getitem__(self, index):
         # row = self.df.iloc[index,0]
-        img_name, label = self.df.iloc[index, -2], self.df.iloc[index, -1]
+        img_path, label = self.df.iloc[index, -2], self.df.iloc[index, -1]
         label = self.labels_dict[label]
-        new_img_name = img_name.split(".m")[0] + "_" + str(self.resolution) + ".npy"
-        # TODO: find a safer way to replace "data" with "data_tmp" as
-        new_img_name = new_img_name.replace("data", "data/data_tmp")
+        pp_img_path = os.path.join(self.store_pp_path, *img_path.split("/")[-3:])
+        pp_img_path = os.path.splitext(pp_img_path)[0] + "_" + str(self.resolution) + ".npy"
 
         try:
-            sample = np.load(new_img_name)
-            print(new_img_name)
-            assert sample.dtype == np.float16, f"Expected float16, got {sample.dtype}"
+            sample = np.load(pp_img_path)
+            # print(new_img_name)
+            assert sample.dtype == np.float16, f"{self.__class__.__name__} Expected float16, got {sample.dtype}"
         except FileNotFoundError:
-            print("could not load", new_img_name)
-            sample = self.load_matfile(img_name)
+            print(self.__class__.__name__, "File not found, loading from mat file and saving as npy to pre-process-path")
+            sample = self.load_matfile(img_path)
             sample = resize(sample, self.reshape_size)
             # cast to float16
             sample = sample.astype(np.float16)
-            assert sample.dtype == np.float16, f"Expected float16, got {sample.dtype}"
-            np.save(new_img_name, sample)
+            assert sample.dtype == np.float16, f"{self.__class__.__name__} Expected float16, got {sample.dtype}"
+            os.makedirs(os.path.dirname(pp_img_path), exist_ok=True)
+            np.save(pp_img_path, sample)
         except Exception as e:
             print(e)
             raise e
 
         if self.transform is not None:
-            raise NotImplementedError("Before applying transforms, we need to check if they are compatible with float16")
+            raise NotImplementedError(f"{self.__class__.__name__} Before applying transforms, we need to check if they are compatible with float16")
             sample = self.transform(**{"image": sample})
             sample = sample["image"]
 
-        sample = self.transform_backbone(sample)
+        sample = self.to_tensor(sample)
         sample = torch.unsqueeze(sample, 0)  # TODO: check if we could move that in the collate function and pre-allcate the memory there
-        assert sample.dtype == torch.float16, f"Expected float16, got {sample.dtype}"
+        assert sample.dtype == torch.float16, f"{self.__class__.__name__} Expected float16, got {sample.dtype}"
 
         label = torch.tensor(label, dtype=torch.long)
         return sample, label

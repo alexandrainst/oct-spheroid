@@ -48,6 +48,8 @@ RUN pip install pandas && \
     pip install pynrrd && \
     pip install mat73 && \
     pip install volumentations-3D
+RUN pip install "numpy<2" && \
+    pip install --user nipy
 
 # WORKDIR /
 

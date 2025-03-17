@@ -1,3 +1,6 @@
 [submodule "nd-dataloader"]
 	path = nd-dataloader
 	url = https://github.com/alexandrainst/nd-dataloader.git
+[submodule "M3d-Cam"]
+	path = M3d-Cam
+	url = https://github.com/MECLabTUDA/M3d-Cam.git

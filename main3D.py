@@ -4,6 +4,7 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 import torch
+import yaml
 from nd_dataloader import Dataloader as nd_Dataloader
 
 # from volumentations import *
@@ -13,6 +14,7 @@ from src.data.make_dataset import CancerSphere3DDataset
 
 # from src.models.generate_model import main
 from src.models.train_model import train3D
+from src.utils.config import MultiLibDumper, config_handler
 
 
 def set_random_seed(seed):
@@ -26,11 +28,11 @@ def set_random_seed(seed):
 
 
 if __name__ == "__main__":
-    EPOCHS = 50
+    config = config_handler("config/experiments/config_3D.yaml")
+
+    print(config)
     CHANNEL = 1
     DIM = 3
-    BATCH_SIZE = 2
-    NUM_WORKERS = 4
     STEPS_PER_EPOCH = 100
     DEVICE = torch.device("cuda:0")
     assert torch.cuda.is_available(), "CUDA not available"
@@ -41,10 +43,7 @@ if __name__ == "__main__":
     DEPTH = 250
     DATASET_LENGTH = 32
 
-    batch_size = BATCH_SIZE
-    num_workers = NUM_WORKERS
     device = DEVICE
-    memory_format = torch.contiguous_format
     tensor_dtype = TENSOR_DTYPE
     target_dtype = TARGET_DTYPE
 
@@ -64,59 +63,45 @@ if __name__ == "__main__":
     traindataset = CancerSphere3DDataset(df=train_df, n_classes=3, reshape_size=(200, 500, 500))
     traindataloader = nd_Dataloader(
         traindataset,
-        batch_size=batch_size,
-        num_workers=num_workers,
-        memory_format=memory_format,
+        batch_size=config["DATALOADER"]["TRAIN"]["BATCH_SIZE"],
+        num_workers=config["DATALOADER"]["TRAIN"]["NUM_WORKERS"],
+        memory_format=config["DATASET"]["MEMORY_FORMAT"],
         use_prefetcher=True,
         mean=traindataset.mean,
         std=traindataset.std,
         dim=DIM,
         is_training=True,
-        pin_memmory=False,
-        tensor_dtype=torch.float16,
-        target_dtype=torch.long,
+        pin_memmory=config["DATALOADER"]["TRAIN"]["PIN_MEMORY"],
+        tensor_dtype=config["DATASET"]["TENSOR_DTYPE"],
+        target_dtype=config["DATASET"]["TARGET_DTYPE"],
         batch_norm=True,
     )
 
     valdataset = CancerSphere3DDataset(df=val_df, n_classes=3, reshape_size=(200, 500, 500))
     valdataloader = nd_Dataloader(
         valdataset,
-        batch_size=2,
-        num_workers=num_workers,
-        memory_format=memory_format,
+        batch_size=config["DATALOADER"]["VAL"]["BATCH_SIZE"],
+        num_workers=config["DATALOADER"]["VAL"]["NUM_WORKERS"],
+        memory_format=config["DATASET"]["MEMORY_FORMAT"],
         use_prefetcher=True,
         mean=valdataset.mean,
         std=valdataset.std,
         dim=DIM,
-        is_training=True,
-        pin_memmory=False,
-        tensor_dtype=torch.float16,
-        target_dtype=torch.long,
+        is_training=False,
+        pin_memmory=config["DATALOADER"]["VAL"]["PIN_MEMORY"],
+        tensor_dtype=config["DATASET"]["TENSOR_DTYPE"],
+        target_dtype=config["DATASET"]["TARGET_DTYPE"],
         batch_norm=True,
     )
 
-    testdataset = CancerSphere3DDataset(df=test_df, n_classes=3, reshape_size=(200, 500, 500))
-    testdataloader = nd_Dataloader(
-        testdataset,
-        batch_size=1,
-        num_workers=num_workers,
-        memory_format=memory_format,
-        use_prefetcher=True,
-        mean=testdataset.mean,
-        std=testdataset.std,
-        dim=DIM,
-        is_training=True,
-        pin_memmory=False,
-        tensor_dtype=torch.float16,
-        target_dtype=torch.long,
-        batch_norm=True,
-    )
     # 3D training
 
     now_str = datetime.now().strftime("%Y%m%d-%H%M%S")
     writer = SummaryWriter(f"runs/3D_{now_str}")
     writer_dict = {"writer": writer, "now_str": now_str, "run_dir": f"runs/3D_{now_str}"}
-
-    train3D(traindataloader, valdataloader, "no_outliers_test", 100, 100, 0.0001, writer=writer_dict)
+    # copy config to run_dir
+    with open(f"{writer_dict['run_dir']}/config.yaml", "w") as file:
+        yaml.dump(config, file, Dumper=MultiLibDumper, default_flow_style=False)
+    train3D(traindataloader, valdataloader, writer=writer_dict, config=config)
 
     # evaluate(testdataloader,'./models/model_no_outliers_test.pt', writer=writer_dict)

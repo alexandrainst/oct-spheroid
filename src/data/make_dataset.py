@@ -1,5 +1,4 @@
 import os
-import random
 
 import mat73
 import numpy as np
@@ -14,79 +13,146 @@ from tqdm import tqdm
 
 # from volumentations import Rotate
 
-random.seed(45)
+DEBUG: bool = False
 
 
 class CustomDataset2D(Dataset):
-    def __init__(self, df, n_slices=4, n_classes=2, labels_dict={"CTRL": 0, "25": 1, "100": 2}, transform=None, save=False, return_filename=False):
+    def __init__(
+        self,
+        df,
+        n_slices=4,
+        n_classes=2,
+        labels_dict={"CTRL": 0, "25": 1, "100": 2},
+        transform=None,
+        return_filename=False,
+        store_pp=True,
+        store_pp_path="/dsv/cancer",
+        norm=True,
+    ):
         self.return_filename = return_filename
         self.labels_dict = labels_dict
-        self.mean = [9.713811]
-        self.std = [10.071295]
+        self.store_pp = store_pp  # boolean to store preprocessed images
+        self.store_pp_path = store_pp_path  # path to store preprocessed images
+        self.mean = [12.4361, 12.4864, 12.4278, 12.3149]
+        self.std = [10.7506, 10.7760, 9.8911, 9.9736]
+        self.norm = transforms.Normalize(mean=self.mean, std=self.std)
+        self.transform = transform
         if n_classes == 2:
-            # self.labels_dict = {"CTRL": 2, "25": 0, "100": 1}
             k = list(labels_dict.keys())
-            # print(k)
             self.df = df[(df["labels"] == k[0]) | (df["labels"] == k[1])]
         else:
-            # self.labels_dict = {"CTRL": 0, "25": 1, "100": 2}
             self.df = df
-        # self.df = df[(df['labels'] == 'CTRL') | (df['labels'] == '100')]
-        # self.df = df[(df['labels'] == '25')]
 
         self.n_slices = n_slices
+        self.norm_bool = norm
+        ending = "_" + str(self.n_slices) + "slices.npy"
 
-        # self.rotator = Compose([
-        #     # Normalize(mean = [9.713811],std=[10.071295]),
-        #     RandomRotate([180,0,0], sample_mode="nearest", p=1)
-        # ])
-        # self.transform = Compose(
-        #     [
-        #         Rotate((0, 0), (0, 0), (45, 45), p=1),
-        #     ],
-        #     p=1.0,
-        # )
-
-        ending = "_" + str(self.n_slices) + "slices.tif"
-
-        self.images = []
         self.labels = []
-        self.filename_slices = []
-        self.filename = []
+        self.filepaths_slices = []
+        self.filepaths = []
         for i in tqdm(range(len(self.df)), desc="Preparing dataset", position=0, leave=True, total=len(self.df)):
-            filename = self.df.iloc[i, -2]
-            self.filename.append(filename)
-            filename_slice = filename.replace(".mat", ending)
-            self.filename_slices.append(filename_slice)
-            if os.path.exists(filename_slice):
-                self.images.append(io.imread(filename_slice))
-            else:
-                self.images.append(self.get_slices(filename))
+            filepath = self.df.iloc[i, -2]
+            self.filepaths.append(filepath)
+            filename_slice = filepath.replace(".mat", ending)
+            if self.store_pp:
+                filename_slice = os.path.join(self.store_pp_path, *filename_slice.split("/")[-3:])
+            self.filepaths_slices.append(filename_slice)
+            #     # if os.path.exists(filename_slice):
+            #     #     self.images.append(io.imread(filename_slice))
+            #     # else:
+            #     self.images.append(self.get_slices(filename))
             self.labels.append(self.df.iloc[i, -1])
-        self.images = [resize(i, (self.n_slices, 250, 1000)) for i in tqdm(self.images, desc="Resizing images", position=0, leave=True, total=len(self.images))]
+
+        # if DEBUG:
+        #     # plot the first image with 4 perspectives
+        #     import matplotlib.pyplot as plt
+        #     fig = plt.figure()
+        #     for i in range(4):
+        #         ax = fig.add_subplot(2, 2, i + 1)
+        #         ax.imshow(self.images[0][:, :, i])
+        #     plt.savefig("debug_before_resize.png")
+        #     plt.close()
+        # # self.images = [resize(i, (self.n_slices, 250, 1000)) for i in tqdm(self.images, desc="Resizing images", position=0, leave=True, total=len(self.images))]
+        # # self.images = [torch.permute(i, (2, 0, 1)) for i in self.images]
+        # self.images = [np.transpose(i, (2, 0, 1)) for i in self.images]
+        # if DEBUG:
+        #     # plot the first image with 4 perspectives
+        #     import matplotlib.pyplot as plt
+        #     fig = plt.figure()
+        #     for i in range(4):
+        #         ax = fig.add_subplot(2, 2, i + 1)
+        #         ax.imshow(self.images[0][i, :, :])
+        #     plt.savefig("debug_after_resize.png")
+        #     plt.close()
+
         self.labels = [self.labels_dict[i] for i in self.labels]
-        if save:
-            for i in tqdm(range(len(self.df)), desc="Saving images", position=0, leave=True, total=len(self.df)):
-                if not os.path.exists(self.filename_slices[i]):
-                    print(self.filename_slices[i])
-                    io.imsave(self.filename_slices[i], self.images[i])
+        # if save:
+        #     for i in tqdm(range(len(self.df)), desc="Saving images", position=0, leave=True, total=len(self.df)):
+        #         if not os.path.exists(self.filename_slices[i]):
+        #             print(self.filename_slices[i])
+        #             io.imsave(self.filename_slices[i], self.images[i])
 
     def __getitem__(self, index):
-        # row = self.df.iloc[index,0]
-        sample = self.images[index]
+        # print("loading", self.filepaths_slices[index])
+        filename = self.filepaths[index]
+        filename_slice = self.filepaths_slices[index]
         label = self.labels[index]
-        if sample.shape != (self.n_slices, 250, 1000):
-            sample = resize(sample, (self.n_slices, 250, 1000))
-        transform_backbone = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean=[9.713811], std=[10.071295]), ops.Permute([1, 2, 0])])
+        if os.path.exists(filename_slice):
+            sample = np.load(filename_slice)
+        else:
+            sample = self.get_slices(filename)
+            assert sample.shape[0] == self.n_slices, f"Expected {self.n_slices}, got {sample.shape[0]}"
+            if sample.shape != (self.n_slices, 250, 1000):
+                print(f"Expected shape {(self.n_slices, 250, 1000)}, got {sample.shape} - resizing")
+                sample = resize(sample, (self.n_slices, 250, 1000))
+            if self.store_pp:
+                os.makedirs(os.path.dirname(filename_slice), exist_ok=True)
+                np.save(filename_slice, sample)
+                # io.imsave(filename_slice, sample)
+
+        assert sample.shape == (self.n_slices, 250, 1000), f"Expected shape {(self.n_slices, 250, 1000)}, got {sample.shape}"
+        # row = self.df.iloc[index,0]
+        # sample = self.images[index]
+        # label = self.labels[index]
+
         # transform_backbone = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean=[9.713811], std=[10.071295])])
         # transform_backbone = transforms.Compose([transforms.ToTensor(), ops.Permute([1, 2, 0])])
 
-        sample = transform_backbone(sample)
+        # sample = self.transform_backbone(sample)
+        if DEBUG:
+            import matplotlib.pyplot as plt
+
+            fig = plt.figure()
+            for i in range(4):
+                ax = fig.add_subplot(2, 2, i + 1)
+                ax.imshow(sample[i, :, :])
+            plt.savefig(f"getitem_idx_{index}.png")
+            plt.close()
+
+        sample_torch = torch.from_numpy(sample)
+        if self.transform is not None:
+            sample_torch = self.transform(sample_torch)
+
+        # # normalize
+        # if self.norm_bool:
+
+        #     sample_torch = self.norm(sample_torch)
+        assert sample_torch.shape == (self.n_slices, 250, 1000), f"Expected shape {(self.n_slices, 250, 1000)}, got {sample_torch.shape}"
+        if DEBUG:
+            import matplotlib.pyplot as plt
+
+            fig = plt.figure()
+            for i in range(4):
+                ax = fig.add_subplot(2, 2, i + 1)
+                ax.imshow(sample_torch[i, :, :])
+            plt.savefig(f"getitem_after_norm_idx_{index}.png")
+            plt.close()
+
         if self.return_filename:
             filename = self.filename[index]
-            return sample, label, filename
+            return sample_torch, label, filename
         else:
-            return sample, label
+            return sample_torch, label
 
     def load_matfile(self, path):
         try:
@@ -116,31 +182,11 @@ class CustomDataset2D(Dataset):
                 sliced_input[1] = vol[:, :, median_pos[2]]
             else:
                 idx = i * 2
-                # print(f'original vol min {vol.min()} max {vol.max()}')
-                # start = time.time()
-                # sample = self.transform(**{"image": vol})
-                # sample = sample['image']
-                # end = time.time()
-                # print(f'3D rotation {end - start}')
-                # print(f'3D vol min {sample.min()} max {sample.max()}')
 
-                # vol = torch.from_numpy(vol)
-                # vol = vol.unsqueeze(1)
-                # sample = self.rotator(input=vol)
-                # sample = sample["input"].numpy()
-
-                # sliced_input[idx] = sample[:, median_pos[1], :]
-                # sliced_input[idx + 1] = sample[:, :, median_pos[2]]
-
-                # start = time.time()
                 for i in range(vol.shape[0]):
                     sliced_input_2drot[i, :, :] = rotate(vol[i, :, :], 45)
                 sliced_input[idx] = sliced_input_2drot[:, median_pos[1], :]
                 sliced_input[idx + 1] = sliced_input_2drot[:, :, median_pos[2]]
-                # end = time.time()
-                # print(f'2D rotation {end- start}')
-                # print(f'2D vol min {sliced_input_2drot.min()} max {sliced_input_2drot.max()}')
-                # print(f'difference {(sample - sliced_input_2drot).sum()}')
 
         # sliced_input[2] = sample[:,median_pos[1],:]
         # sliced_input[3] = sample[:,:,median_pos[2]]
@@ -328,7 +374,17 @@ class CancerSphere3DDataset(CustomDataset):
     This still allows for the use of transforms, but decreases loading time.
     """
 
-    def __init__(self, df, n_classes, reshape_size, transform=None, labels_dict={"CTRL": 0, "25": 1, "100": 2}, store_pp=True, store_pp_path="/dsv/cancer"):
+    def __init__(
+        self,
+        df,
+        n_classes,
+        reshape_size,
+        transform=None,
+        labels_dict={"CTRL": 0, "25": 1, "100": 2},
+        store_pp=True,
+        store_pp_path="/dsv/cancer",
+        return_file_path=False,
+    ):
         super().__init__(df, n_classes, reshape_size, transform, labels_dict)
         self.store_pp = store_pp  # boolean to store preprocessed images
         self.store_pp_path = store_pp_path  # path to store preprocessed images
@@ -338,6 +394,7 @@ class CancerSphere3DDataset(CustomDataset):
                 ops.Permute([1, 2, 0]),
             ]
         )
+        self.return_file_path = return_file_path
 
     def preprocess(self):
         """
@@ -390,4 +447,6 @@ class CancerSphere3DDataset(CustomDataset):
         assert sample.dtype == torch.float16, f"{self.__class__.__name__} Expected float16, got {sample.dtype}"
 
         label = torch.tensor(label, dtype=torch.long)
+        if self.return_file_path:
+            return sample, label, img_path
         return sample, label

@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 # from volumentations import *
 from torch.utils.tensorboard import SummaryWriter
 
-from src.data.make_dataset import CustomDataset2D
+from src.data.dataset_multiview import MultiviewDataset
 
 # from src.models.generate_model import main
 from src.models.train_model import train_multiview
@@ -66,58 +66,16 @@ if __name__ == "__main__":
     # transform_train = get_augmentation((250, 500, 500), True)
     # transform_val = get_augmentation((250, 500, 500))
 
-    traindataset = CustomDataset2D(df=train_df, n_classes=3)
-    # traindataloader = nd_Dataloader(
-    #     traindataset,
-    #     batch_size=batch_size,
-    #     num_workers=num_workers,
-    #     memory_format=memory_format,
-    #     use_prefetcher=True,
-    #     mean=traindataset.mean,
-    #     std=traindataset.std,
-    #     dim=DIM,
-    #     is_training=True,
-    #     pin_memmory=False,
-    #     tensor_dtype=torch.float16,
-    #     target_dtype=torch.long,
-    #     batch_norm=True,
-    # )
+    traindataset = MultiviewDataset(df=train_df, n_classes=3)
+
     traindataloader = DataLoader(traindataset, batch_size=5, shuffle=True)
 
-    valdataset = CustomDataset2D(df=val_df, n_classes=3)
-    # valdataloader = nd_Dataloader(
-    #     valdataset,
-    #     batch_size=2,
-    #     num_workers=num_workers,
-    #     memory_format=memory_format,
-    #     use_prefetcher=True,
-    #     mean=valdataset.mean,
-    #     std=valdataset.std,
-    #     dim=DIM,
-    #     is_training=True,
-    #     pin_memmory=False,
-    #     tensor_dtype=torch.float16,
-    #     target_dtype=torch.long,
-    #     batch_norm=True,
-    # )
+    valdataset = MultiviewDataset(df=val_df, n_classes=3)
+
     valdataloader = DataLoader(valdataset, batch_size=2)
 
-    testdataset = CustomDataset2D(df=test_df, n_classes=3, return_filename=True)
-    # testdataloader = nd_Dataloader(
-    #     testdataset,
-    #     batch_size=1,
-    #     num_workers=num_workers,
-    #     memory_format=memory_format,
-    #     use_prefetcher=True,
-    #     mean=testdataset.mean,
-    #     std=testdataset.std,
-    #     dim=DIM,
-    #     is_training=True,
-    #     pin_memmory=False,
-    #     tensor_dtype=torch.float16,
-    #     target_dtype=torch.long,
-    #     batch_norm=True,
-    # )
+    testdataset = MultiviewDataset(df=test_df, n_classes=3, return_filename=True)
+
     testdataloader = DataLoader(testdataset, batch_size=1)
     # 3D training
 

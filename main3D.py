@@ -9,7 +9,7 @@ from nd_dataloader import Dataloader as nd_Dataloader
 # from volumentations import *
 from torch.utils.tensorboard import SummaryWriter
 
-from src.data.make_dataset import CancerSphere3DDataset
+from src.data.dataset_3D import CancerSphere3DDataset
 
 # from src.models.generate_model import main
 from src.models.train_model import train3D

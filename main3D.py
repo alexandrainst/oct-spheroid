@@ -1,9 +1,11 @@
+import argparse
 import random
 from datetime import datetime
 
 import numpy as np
 import pandas as pd
 import torch
+import yaml
 from nd_dataloader import Dataloader as nd_Dataloader
 
 # from volumentations import *
@@ -13,6 +15,7 @@ from src.data.dataset_3D import CancerSphere3DDataset
 
 # from src.models.generate_model import main
 from src.models.train_model import train3D
+from src.utils.config import MultiLibDumper, config_handler
 
 
 def set_random_seed(seed):
@@ -26,27 +29,17 @@ def set_random_seed(seed):
 
 
 if __name__ == "__main__":
-    EPOCHS = 50
-    CHANNEL = 1
-    DIM = 3
-    BATCH_SIZE = 2
-    NUM_WORKERS = 4
-    STEPS_PER_EPOCH = 100
-    DEVICE = torch.device("cuda:0")
-    assert torch.cuda.is_available(), "CUDA not available"
-    TENSOR_DTYPE = torch.float16
-    TARGET_DTYPE = torch.long
-    HEIGHT = 500
-    WIDTH = 500
-    DEPTH = 250
-    DATASET_LENGTH = 32
+    # read yaml file
+    parser = argparse.ArgumentParser(description="3D Model Training")
+    parser.add_argument("--config", type=str, default="config/experiments/config_3D.yaml", help="Path to the config file")
+    args = parser.parse_args()
+    config = config_handler(args.config)
 
-    batch_size = BATCH_SIZE
-    num_workers = NUM_WORKERS
-    device = DEVICE
-    memory_format = torch.contiguous_format
-    tensor_dtype = TENSOR_DTYPE
-    target_dtype = TARGET_DTYPE
+    print(config)
+    DIM = 3  # TODO move to config
+    assert torch.cuda.is_available(), "CUDA not available"
+
+    DATASET_LENGTH = 32
 
     # set random seed
     set_random_seed(45)
@@ -56,67 +49,67 @@ if __name__ == "__main__":
     val_df = pd.read_csv("./data/val_no_outliers.csv")
     test_df = pd.read_csv("./data/test_no_outliers.csv")
 
-    # 3D DATASET
+    # label_dict # TODO move to config
+    if config["GENERAL"]["TASK"] == "classification":
+        labels_dict = {
+            "CTRL": 0,
+            "25": 1,
+            "100": 2,
+        }
+    elif config["GENERAL"]["TASK"] == "regression":
+        labels_dict = {
+            "CTRL": 0.0,
+            "25": 0.25,
+            "100": 1.0,
+        }
 
-    # transform_train = get_augmentation((250, 500, 500), True)
-    # transform_val = get_augmentation((250, 500, 500))
-
-    traindataset = CancerSphere3DDataset(df=train_df, n_classes=3, reshape_size=(200, 500, 500))
+    traindataset = CancerSphere3DDataset(df=train_df, n_classes=3, reshape_size=(200, 500, 500), task=config["GENERAL"]["TASK"], labels_dict=labels_dict)
     traindataloader = nd_Dataloader(
         traindataset,
-        batch_size=batch_size,
-        num_workers=num_workers,
-        memory_format=memory_format,
+        batch_size=config["DATALOADER"]["TRAIN"]["BATCH_SIZE"],
+        num_workers=config["DATALOADER"]["TRAIN"]["NUM_WORKERS"],
+        memory_format=config["DATASET"]["MEMORY_FORMAT"],
         use_prefetcher=True,
         mean=traindataset.mean,
         std=traindataset.std,
         dim=DIM,
         is_training=True,
-        pin_memmory=False,
-        tensor_dtype=torch.float16,
-        target_dtype=torch.long,
+        pin_memmory=config["DATALOADER"]["TRAIN"]["PIN_MEMORY"],
+        tensor_dtype=config["DATASET"]["TENSOR_DTYPE"],
+        target_dtype=config["DATASET"]["TARGET_DTYPE"],
         batch_norm=True,
     )
 
-    valdataset = CancerSphere3DDataset(df=val_df, n_classes=3, reshape_size=(200, 500, 500))
+    valdataset = CancerSphere3DDataset(df=val_df, n_classes=3, reshape_size=(200, 500, 500), task=config["GENERAL"]["TASK"], labels_dict=labels_dict)
     valdataloader = nd_Dataloader(
         valdataset,
-        batch_size=2,
-        num_workers=num_workers,
-        memory_format=memory_format,
+        batch_size=config["DATALOADER"]["VAL"]["BATCH_SIZE"],
+        num_workers=config["DATALOADER"]["VAL"]["NUM_WORKERS"],
+        memory_format=config["DATASET"]["MEMORY_FORMAT"],
         use_prefetcher=True,
         mean=valdataset.mean,
         std=valdataset.std,
         dim=DIM,
-        is_training=True,
-        pin_memmory=False,
-        tensor_dtype=torch.float16,
-        target_dtype=torch.long,
+        is_training=False,
+        pin_memmory=config["DATALOADER"]["VAL"]["PIN_MEMORY"],
+        tensor_dtype=config["DATASET"]["TENSOR_DTYPE"],
+        target_dtype=config["DATASET"]["TARGET_DTYPE"],
         batch_norm=True,
     )
-
-    testdataset = CancerSphere3DDataset(df=test_df, n_classes=3, reshape_size=(200, 500, 500))
-    testdataloader = nd_Dataloader(
-        testdataset,
-        batch_size=1,
-        num_workers=num_workers,
-        memory_format=memory_format,
-        use_prefetcher=True,
-        mean=testdataset.mean,
-        std=testdataset.std,
-        dim=DIM,
-        is_training=True,
-        pin_memmory=False,
-        tensor_dtype=torch.float16,
-        target_dtype=torch.long,
-        batch_norm=True,
-    )
-    # 3D training
 
     now_str = datetime.now().strftime("%Y%m%d-%H%M%S")
-    writer = SummaryWriter(f"runs/3D_{now_str}")
-    writer_dict = {"writer": writer, "now_str": now_str, "run_dir": f"runs/3D_{now_str}"}
+    if config["GENERAL"]["TASK"] == "classification":
+        writer = SummaryWriter(f"runs/3D_{now_str}")
+        writer_dict = {"writer": writer, "now_str": now_str, "run_dir": f"runs/3D_{now_str}"}
+    elif config["GENERAL"]["TASK"] == "regression":
+        writer = SummaryWriter(f"runs/3D_regression_{now_str}")
+        writer_dict = {"writer": writer, "now_str": now_str, "run_dir": f"runs/3D_regression_{now_str}"}
+    else:
+        raise ValueError(f"Unknown task {config['GENERAL']['TASK']}")
+    # copy config to run_dir
+    with open(f"{writer_dict['run_dir']}/config.yaml", "w") as file:
+        yaml.dump(config, file, Dumper=MultiLibDumper, default_flow_style=False)
 
-    train3D(traindataloader, valdataloader, "no_outliers_test", 100, 100, 0.0001, writer=writer_dict)
+    train3D(traindataloader, valdataloader, writer=writer_dict, config=config)
 
     # evaluate(testdataloader,'./models/model_no_outliers_test.pt', writer=writer_dict)

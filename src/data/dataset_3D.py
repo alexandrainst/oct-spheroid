@@ -16,9 +16,22 @@ class CancerSphere3DDataset(Dataset):
     This still allows for the use of transforms, but decreases loading time.
     """
 
-    def __init__(self, df, n_classes, reshape_size, transform=None, labels_dict={"CTRL": 0, "25": 1, "100": 2}, store_pp=True, store_pp_path="/dsv/cancer"):
+    def __init__(
+        self,
+        df,
+        n_classes,
+        reshape_size,
+        transform=None,
+        labels_dict={"CTRL": 0, "25": 1, "100": 2},
+        store_pp=True,
+        store_pp_path="/dsv/cancer",
+        task: str = "classification",
+        return_filename=False,
+    ):
         self.labels_dict = labels_dict
         key_list = list(labels_dict.keys())
+        assert task in ["classification", "regression"], f"{self.__class__.__name__} task must be either classification or regression"
+        self.task = task
         if n_classes == 2:
             self.df = df[(df["labels"] == key_list[0]) | (df["labels"] == key_list[1])]
         else:
@@ -38,6 +51,7 @@ class CancerSphere3DDataset(Dataset):
                 ops.Permute([1, 2, 0]),
             ]
         )
+        self.return_filename = return_filename
 
     def load_matfile(self, path):
         try:
@@ -52,6 +66,9 @@ class CancerSphere3DDataset(Dataset):
                 print(path)
 
         return img["tdData"]
+
+    def __len__(self):
+        return len(self.df)
 
     def preprocess(self):
         """
@@ -73,7 +90,10 @@ class CancerSphere3DDataset(Dataset):
     def __getitem__(self, index):
         # row = self.df.iloc[index,0]
         img_path, label = self.df.iloc[index, -2], self.df.iloc[index, -1]
+
         label = self.labels_dict[label]
+        if self.task == "regression":
+            label = float(label)
         pp_img_path = os.path.join(self.store_pp_path, *img_path.split("/")[-3:])
         pp_img_path = os.path.splitext(pp_img_path)[0] + "_" + str(self.resolution) + ".npy"
 
@@ -102,6 +122,12 @@ class CancerSphere3DDataset(Dataset):
         sample = self.to_tensor(sample)
         sample = torch.unsqueeze(sample, 0)  # TODO: check if we could move that in the collate function and pre-allcate the memory there
         assert sample.dtype == torch.float16, f"{self.__class__.__name__} Expected float16, got {sample.dtype}"
-
-        label = torch.tensor(label, dtype=torch.long)
+        if self.task == "classification":
+            label = torch.tensor(label, dtype=torch.long)
+        elif self.task == "regression":
+            label = torch.tensor(label, dtype=torch.float16)
+        else:
+            raise NotImplementedError(f"{self.__class__.__name__} task {self.task} not implemented")
+        if self.return_filename:
+            return sample, label, img_path
         return sample, label

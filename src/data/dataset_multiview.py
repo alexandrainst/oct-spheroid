@@ -3,19 +3,36 @@ import os
 import mat73
 import numpy as np
 import scipy
-from skimage import io
+import torch
 from skimage.transform import resize, rotate
 from torch.utils.data import Dataset
-from torchvision import ops, transforms
+from torchvision import transforms
 from tqdm import tqdm
+
+DEBUG = False
 
 
 class MultiviewDataset(Dataset):
-    def __init__(self, df, n_slices=4, n_classes=2, labels_dict={"CTRL": 0, "25": 1, "100": 2}, transform=None, save=False, return_filename=False):
+    def __init__(
+        self,
+        df,
+        n_slices=4,
+        n_classes=2,
+        labels_dict={"CTRL": 0, "25": 1, "100": 2},
+        transform=None,
+        return_filename=False,
+        store_pp=True,
+        store_pp_path="/dsv/cancer",
+        norm=True,
+    ):
         self.return_filename = return_filename
         self.labels_dict = labels_dict
-        self.mean = [9.713811]
-        self.std = [10.071295]
+        self.store_pp = store_pp  # boolean to store preprocessed images
+        self.store_pp_path = store_pp_path  # path to store preprocessed images
+        self.mean = [12.4361, 12.4864, 12.4278, 12.3149]
+        self.std = [10.7506, 10.7760, 9.8911, 9.9736]
+        self.norm = transforms.Normalize(mean=self.mean, std=self.std)
+        self.transform = transform
         if n_classes == 2:
             k = list(labels_dict.keys())
             self.df = df[(df["labels"] == k[0]) | (df["labels"] == k[1])]
@@ -23,44 +40,70 @@ class MultiviewDataset(Dataset):
             self.df = df
 
         self.n_slices = n_slices
+        self.norm_bool = norm
+        ending = "_" + str(self.n_slices) + "slices.npy"
 
-        ending = "_" + str(self.n_slices) + "slices.tif"
-
-        self.images = []
         self.labels = []
-        self.filename_slices = []
-        self.filename = []
+        self.filepaths_slices = []
+        self.filepaths = []
         for i in tqdm(range(len(self.df)), desc="Preparing dataset", position=0, leave=True, total=len(self.df)):
-            filename = self.df.iloc[i, -2]
-            self.filename.append(filename)
-            filename_slice = filename.replace(".mat", ending)
-            self.filename_slices.append(filename_slice)
-            if os.path.exists(filename_slice):
-                self.images.append(io.imread(filename_slice))
-            else:
-                self.images.append(self.get_slices(filename))
+            filepath = self.df.iloc[i, -2]
+            self.filepaths.append(filepath)
+            filename_slice = filepath.replace(".mat", ending)
+            if self.store_pp:
+                filename_slice = os.path.join(self.store_pp_path, *filename_slice.split("/")[-3:])
+            self.filepaths_slices.append(filename_slice)
             self.labels.append(self.df.iloc[i, -1])
-        self.images = [resize(i, (self.n_slices, 250, 1000)) for i in tqdm(self.images, desc="Resizing images", position=0, leave=True, total=len(self.images))]
+
         self.labels = [self.labels_dict[i] for i in self.labels]
-        if save:
-            for i in tqdm(range(len(self.df)), desc="Saving images", position=0, leave=True, total=len(self.df)):
-                if not os.path.exists(self.filename_slices[i]):
-                    print(self.filename_slices[i])
-                    io.imsave(self.filename_slices[i], self.images[i])
 
     def __getitem__(self, index):
-        sample = self.images[index]
+        filename = self.filepaths[index]
+        filename_slice = self.filepaths_slices[index]
         label = self.labels[index]
-        if sample.shape != (self.n_slices, 250, 1000):
-            sample = resize(sample, (self.n_slices, 250, 1000))
-        transform_backbone = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean=[9.713811], std=[10.071295]), ops.Permute([1, 2, 0])])
-
-        sample = transform_backbone(sample)
-        if self.return_filename:
-            filename = self.filename[index]
-            return sample, label, filename
+        if os.path.exists(filename_slice):
+            sample = np.load(filename_slice)
         else:
-            return sample, label
+            sample = self.get_slices(filename)
+            assert sample.shape[0] == self.n_slices, f"Expected {self.n_slices}, got {sample.shape[0]}"
+            if sample.shape != (self.n_slices, 250, 1000):
+                print(f"Expected shape {(self.n_slices, 250, 1000)}, got {sample.shape} - resizing")
+                sample = resize(sample, (self.n_slices, 250, 1000))
+            if self.store_pp:
+                os.makedirs(os.path.dirname(filename_slice), exist_ok=True)
+                np.save(filename_slice, sample)
+
+        assert sample.shape == (self.n_slices, 250, 1000), f"Expected shape {(self.n_slices, 250, 1000)}, got {sample.shape}"
+
+        if DEBUG:
+            import matplotlib.pyplot as plt
+
+            fig = plt.figure()
+            for i in range(4):
+                ax = fig.add_subplot(2, 2, i + 1)
+                ax.imshow(sample[i, :, :])
+            plt.savefig(f"getitem_idx_{index}.png")
+            plt.close()
+
+        sample_torch = torch.from_numpy(sample)
+        if self.transform is not None:
+            sample_torch = self.transform(sample_torch)
+
+        assert sample_torch.shape == (self.n_slices, 250, 1000), f"Expected shape {(self.n_slices, 250, 1000)}, got {sample_torch.shape}"
+        if DEBUG:
+            import matplotlib.pyplot as plt
+
+            fig = plt.figure()
+            for i in range(4):
+                ax = fig.add_subplot(2, 2, i + 1)
+                ax.imshow(sample_torch[i, :, :])
+            plt.savefig(f"getitem_after_norm_idx_{index}.png")
+            plt.close()
+
+        if self.return_filename:
+            return sample_torch, label, filename_slice
+        else:
+            return sample_torch, label
 
     def load_matfile(self, path):
         try:
@@ -77,6 +120,7 @@ class MultiviewDataset(Dataset):
 
     def get_slices(self, path):
         vol = self.load_matfile(path)
+        # vol = normalise_to_positive(vol)
         vol_thresh = (vol > 0.9).astype(float)
         median_pos = [int(np.median(i)) for i in np.where(vol_thresh == 1)]
 
@@ -88,6 +132,7 @@ class MultiviewDataset(Dataset):
                 sliced_input[1] = vol[:, :, median_pos[2]]
             else:
                 idx = i * 2
+
                 for i in range(vol.shape[0]):
                     sliced_input_2drot[i, :, :] = rotate(vol[i, :, :], 45)
                 sliced_input[idx] = sliced_input_2drot[:, median_pos[1], :]

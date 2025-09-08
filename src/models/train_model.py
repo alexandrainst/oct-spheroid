@@ -8,6 +8,8 @@ from tqdm import tqdm
 from src.models.generate_model import generate_model
 from src.models.multiview import SeparateChannelsResNet18V2
 
+DEBUG = True
+
 
 def train_multiview(traindataload, valdataload, writer, config):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -44,6 +46,14 @@ def train_multiview(traindataload, valdataload, writer, config):
         net.train()
         for step, (img, label) in tqdm(enumerate(traindataload), desc=f"Train epoch {epoch+1}/{total_epochs}", total=len(traindataload)):
             optimizer.zero_grad()
+            # if DEBUG:
+            #     import torchvision
+            #     # plot image
+            #     os.makedirs("./debug_images_2D", exist_ok=True)
+            #     for i_view in range(img.shape[1]):
+            #         torchvision.utils.save_image(img[:,i_view].unsqueeze(1), f"./debug_images_2D/img_view{i_view}_{step}.png", normalize=True)
+
+            #     print('here')
             img = img.to(device)
             label = label.to(device)
             pred = net.forward(img.float())
@@ -58,7 +68,7 @@ def train_multiview(traindataload, valdataload, writer, config):
             writer["writer"].add_scalar("accuracy/train_step", acc, log_step)
 
         with torch.no_grad():
-            for step, (img, label) in tqdm(enumerate(valdataload), desc=f"Validation epoch {epoch+1}/{config['training']['epochs']}", total=len(valdataload)):
+            for step, (img, label) in tqdm(enumerate(valdataload), desc=f"Validation epoch {epoch+1}/{total_epochs}", total=len(valdataload)):
                 net.eval()
                 img = img.to(device, dtype=torch.float)
                 label = label.to(device)
@@ -83,7 +93,7 @@ def train_multiview(traindataload, valdataload, writer, config):
 def train3D(traindataload, valdataload, writer, config):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if config["GENERAL"]["TASK"] == "classification":
-        net = generate_model("resnet", 18, 3, 1, 128)
+        net = generate_model("resnet", 18, config["MODEL"]["NUMBER_OF_CLASSES"], 1, 128)
         criterion = torch.nn.CrossEntropyLoss()
     elif config["GENERAL"]["TASK"] == "regression":
         net = generate_model("resnet", 18, 1, 1, 128)

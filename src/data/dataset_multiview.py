@@ -6,7 +6,6 @@ import scipy
 import torch
 from skimage.transform import resize, rotate
 from torch.utils.data import Dataset
-from torchvision import transforms
 from tqdm import tqdm
 
 DEBUG = False
@@ -31,7 +30,6 @@ class MultiviewDataset(Dataset):
         self.store_pp_path = store_pp_path  # path to store preprocessed images
         self.mean = [12.4361, 12.4864, 12.4278, 12.3149]
         self.std = [10.7506, 10.7760, 9.8911, 9.9736]
-        self.norm = transforms.Normalize(mean=self.mean, std=self.std)
         self.transform = transform
         if n_classes == 2:
             k = list(labels_dict.keys())

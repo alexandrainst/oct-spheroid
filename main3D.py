@@ -63,7 +63,9 @@ if __name__ == "__main__":
             "100": 1.0,
         }
 
-    traindataset = CancerSphere3DDataset(df=train_df, n_classes=3, reshape_size=(200, 500, 500), task=config["GENERAL"]["TASK"], labels_dict=labels_dict)
+    traindataset = CancerSphere3DDataset(
+        df=train_df, n_classes=config["MODEL"]["NUMBER_OF_CLASSES"], reshape_size=(200, 500, 500), task=config["GENERAL"]["TASK"], labels_dict=labels_dict
+    )
     traindataloader = nd_Dataloader(
         traindataset,
         batch_size=config["DATALOADER"]["TRAIN"]["BATCH_SIZE"],
@@ -80,7 +82,9 @@ if __name__ == "__main__":
         batch_norm=True,
     )
 
-    valdataset = CancerSphere3DDataset(df=val_df, n_classes=3, reshape_size=(200, 500, 500), task=config["GENERAL"]["TASK"], labels_dict=labels_dict)
+    valdataset = CancerSphere3DDataset(
+        df=val_df, n_classes=config["MODEL"]["NUMBER_OF_CLASSES"], reshape_size=(200, 500, 500), task=config["GENERAL"]["TASK"], labels_dict=labels_dict
+    )
     valdataloader = nd_Dataloader(
         valdataset,
         batch_size=config["DATALOADER"]["VAL"]["BATCH_SIZE"],

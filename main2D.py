@@ -15,7 +15,7 @@ from src.data.dataset_multiview import MultiviewDataset
 
 # from src.models.generate_model import main
 from src.models.train_model import train_multiview
-from src.utils.config import config_handler
+from src.utils.config import MultiLibDumper, config_handler
 
 # from nd_dataloader import Dataloader as nd_Dataloader
 
@@ -38,27 +38,27 @@ if __name__ == "__main__":
     config = config_handler("config/experiments/config_2D.yaml")
 
     print(config)
-    EPOCHS = 50
-    CHANNEL = 1
-    DIM = 2
-    BATCH_SIZE = 2
-    NUM_WORKERS = 8
-    STEPS_PER_EPOCH = 100
+    # EPOCHS = 50
+    # CHANNEL = 1
+    # DIM = 2
+    # BATCH_SIZE = 2
+    # NUM_WORKERS = 8
+    # STEPS_PER_EPOCH = 100
     DEVICE = torch.device("cuda:1")
     assert torch.cuda.is_available(), "CUDA not available"
-    TENSOR_DTYPE = torch.float16
-    TARGET_DTYPE = torch.long
-    HEIGHT = 500
-    WIDTH = 500
-    DEPTH = 250
-    DATASET_LENGTH = 32
+    # TENSOR_DTYPE = torch.float16
+    # TARGET_DTYPE = torch.long
+    # HEIGHT = 500
+    # WIDTH = 500
+    # DEPTH = 250
+    # DATASET_LENGTH = 32
 
-    batch_size = BATCH_SIZE
-    num_workers = NUM_WORKERS
-    device = DEVICE
-    memory_format = torch.contiguous_format
-    tensor_dtype = TENSOR_DTYPE
-    target_dtype = TARGET_DTYPE
+    # batch_size = BATCH_SIZE
+    # num_workers = NUM_WORKERS
+    # device = DEVICE
+    # memory_format = torch.contiguous_format
+    # tensor_dtype = TENSOR_DTYPE
+    # target_dtype = TARGET_DTYPE
 
     # set random seed
     set_random_seed(45)
@@ -69,8 +69,6 @@ if __name__ == "__main__":
 
     transforms_train = v2.Compose(
         [
-            v2.RandomHorizontalFlip(p=0.5),
-            # v2.RandomVerticalFlip(p=0.5),
             v2.Normalize(mean=[12.4361, 12.4864, 12.4278, 12.3149], std=[10.7506, 10.7760, 9.8911, 9.9736]),
         ]
     )
@@ -80,18 +78,22 @@ if __name__ == "__main__":
         ]
     )
 
-    traindataset = MultiviewDataset(df=train_df, n_classes=3)
-    traindataloader = DataLoader(traindataset, batch_size=5, shuffle=True)
+    traindataset = MultiviewDataset(df=train_df, n_classes=config["MODEL"]["NUMBER_OF_CLASSES"], transform=transforms_train)
+    traindataloader = DataLoader(
+        traindataset, batch_size=config["DATALOADER"]["TRAIN"]["BATCH_SIZE"], shuffle=True, num_workers=config["DATALOADER"]["TRAIN"]["NUM_WORKERS"]
+    )
 
-    valdataset = MultiviewDataset(df=val_df, n_classes=3)
-    valdataloader = DataLoader(valdataset, batch_size=2)
+    valdataset = MultiviewDataset(df=val_df, n_classes=config["MODEL"]["NUMBER_OF_CLASSES"], transform=transforms_val)
+    valdataloader = DataLoader(
+        valdataset, batch_size=config["DATALOADER"]["VAL"]["BATCH_SIZE"], shuffle=False, num_workers=config["DATALOADER"]["VAL"]["NUM_WORKERS"]
+    )
 
     now_str = datetime.now().strftime("%Y%m%d-%H%M%S")
     writer = SummaryWriter(f"runs/2D_{now_str}")
     writer_dict = {"writer": writer, "now_str": now_str, "run_dir": f"runs/2D_{now_str}"}
     # copy config to run_dir
     with open(f"{writer_dict['run_dir']}/config.yaml", "w") as file:
-        yaml.dump(config, file)
-    train_multiview(traindataloader, valdataloader, "multiview_4slices_no_outliers", 500, 0.0001, 3, writer=writer_dict, config=config)
+        yaml.dump(config, file, Dumper=MultiLibDumper, default_flow_style=False)
+    train_multiview(traindataloader, valdataloader, writer=writer_dict, config=config)
 
     # evaluate2D(testdataset,'./models/model_multiview_4slices_no_outliers.pt',3, writer=writer_dict)

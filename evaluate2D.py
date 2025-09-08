@@ -7,6 +7,7 @@ import pandas as pd
 import torch
 from sklearn import metrics
 from torch.utils.data import DataLoader
+from torchvision.transforms import v2
 from tqdm import tqdm
 
 from src.data.dataset_multiview import MultiviewDataset
@@ -23,8 +24,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
     config = config_handler(args.config)
 
+    transforms_val = v2.Compose(
+        [
+            v2.Normalize(mean=[12.4361, 12.4864, 12.4278, 12.3149], std=[10.7506, 10.7760, 9.8911, 9.9736]),
+        ]
+    )
+
     test_df = pd.read_csv("./data/test_no_outliers.csv")
-    testdataset = MultiviewDataset(df=test_df, n_classes=3, return_filename=True)
+    testdataset = MultiviewDataset(df=test_df, n_classes=3, return_filename=True, transform=transforms_val, labels_dict={"CTRL": 0, "25": 1, "100": 2})
     testdataloader = DataLoader(testdataset, batch_size=1)
     acc = []
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -43,7 +50,7 @@ if __name__ == "__main__":
     with open(os.path.join(eval_path, "evaluation_log.txt"), "w") as w:
         with torch.no_grad():
             for step, (img, label, filename) in tqdm(enumerate(testdataloader), desc="Test evaluation", leave=True, position=0, total=len(testdataloader)):
-                net.train()  # TODO change to eval if models are more generalized
+                net.eval()  # TODO change to eval if models are more generalized
                 img = img.to(device, dtype=torch.float)
                 pred = net.forward(img)
                 single_acc = accuracy(pred=pred, label=label)

@@ -32,6 +32,9 @@ if __name__ == "__main__":
         df=test_df, n_classes=3, reshape_size=(200, 500, 500), task=config["GENERAL"]["TASK"], labels_dict=labels_dict, return_filename=True
     )
     testdataloader = DataLoader(testdataset, batch_size=1)
+
+    testdataset.mean, testdataset.std
+
     acc = []
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     assert torch.cuda.is_available(), "CUDA not available"
@@ -51,7 +54,10 @@ if __name__ == "__main__":
         with torch.no_grad():
             for step, (img, label, filename) in tqdm(enumerate(testdataloader), desc="Test evaluation", leave=True, position=0, total=len(testdataloader)):
                 net.train()  # TODO change to eval if models are more generalized
+                # net.eval()
                 img = img.to(device, dtype=torch.float)
+                # normalize
+                img = img.sub(testdataset.mean[0]).div(testdataset.std[0])
                 with torch.cuda.amp.autocast(dtype=torch.float16):
                     pred = net.forward(img)
                 single_acc = accuracy(pred=pred, label=label)

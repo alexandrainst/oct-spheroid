@@ -1,6 +1,6 @@
 GENERAL:
   SEED: 45
-  NAME: 3D_ResNet18
+  NAME: 2D_ResNet18
 DATASET:
   WIDTH: 500
   HEIGHT: 500
@@ -10,15 +10,15 @@ DATASET:
   MEMORY_FORMAT: !torch contiguous_format
 DATALOADER:
   TRAIN:
-    BATCH_SIZE: 2
+    BATCH_SIZE: 12
     PIN_MEMORY: false
     NUM_WORKERS: 4
   VAL:
-    BATCH_SIZE: 2
+    BATCH_SIZE: 12
     PIN_MEMORY: false
     NUM_WORKERS: 4
   TEST:
-    BATCH_SIZE: 2
+    BATCH_SIZE: 12
     PIN_MEMORY: false
     NUM_WORKERS: 4
 OPTIMIZER:

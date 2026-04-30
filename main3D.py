@@ -7,25 +7,11 @@ import pandas as pd
 import torch
 import yaml
 from nd_dataloader import Dataloader as nd_Dataloader
-
-# from volumentations import *
 from torch.utils.tensorboard import SummaryWriter
 
 from src.data.dataset_3D import CancerSphere3DDataset
-
-# from src.models.generate_model import main
 from src.models.train_model import train3D
-from src.utils.config import MultiLibDumper, config_handler
-
-
-def set_random_seed(seed):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
+from src.utils.config import MultiLibDumper, config_handler, set_random_seed
 
 
 if __name__ == "__main__":

@@ -23,13 +23,19 @@ class MultiviewDataset(Dataset):
         store_pp=True,
         store_pp_path="/dsv/cancer",
         norm=True,
+        shape = (4, 250, 1000),
+        mean=[12.4361, 12.4864, 12.4278, 12.3149],
+        std=[10.7506, 10.7760, 9.8911, 9.9736],
     ):
         self.return_filename = return_filename
         self.labels_dict = labels_dict
         self.store_pp = store_pp  # boolean to store preprocessed images
         self.store_pp_path = store_pp_path  # path to store preprocessed images
-        self.mean = [12.4361, 12.4864, 12.4278, 12.3149]
-        self.std = [10.7506, 10.7760, 9.8911, 9.9736]
+        self.mean = mean
+        self.std = std
+        # TODO: Shape overdefined. n_slices and shape[0] should be the same. Can be simplified by just passing shape.
+        self.shape = shape
+        assert n_slices == shape[0], f"Expected n_slices to be {shape[0]}, got {n_slices}"
         self.transform = transform
         if n_classes == 2:
             k = list(labels_dict.keys())
@@ -55,6 +61,40 @@ class MultiviewDataset(Dataset):
 
         self.labels = [self.labels_dict[i] for i in self.labels]
 
+    def preprocess(self):
+        for i in tqdm(range(len(self.df)), desc="Preprocessing images", position=0, leave=True, total=len(self.df)):            
+            filename = self.filepaths[i]
+            filename_slice = self.filepaths_slices[i]
+
+            if os.path.exists(filename_slice):
+                continue
+            else:
+                sample = self.get_slices(filename)
+                assert sample.shape[0] == self.n_slices, f"Expected {self.n_slices}, got {sample.shape[0]}"
+                if sample.shape != self.shape:
+                    print(f"Expected shape {self.shape}, got {sample.shape} - resizing")
+                    sample = resize(sample, self.shape)
+                os.makedirs(os.path.dirname(filename_slice), exist_ok=True)
+                sample = sample.astype(np.float16)
+                np.save(filename_slice, sample)
+
+            assert sample.shape == self.shape, f"Expected shape {self.shape}, got {sample.shape}"
+
+
+            
+            # try:
+            #     sample = np.load(pp_img_path)
+            #     assert sample.shape == reshape_size, f"Expected shape {reshape_size}, got {sample.shape}"
+            #     assert sample.dtype == np.float16, f"{cls.__name__} Expected float16, got {sample.dtype}"
+            # except FileNotFoundError:
+            #     print(cls.__name__, f"File not found, loading from mat file save to - {pp_img_path}")
+            #     sample = cls.load_matfile(cls, img_path)
+            #     sample = resize(sample, reshape_size)
+            #     # cast to float16
+            #     sample = sample.astype(np.float16)
+            #     assert sample.shape == reshape_size, f"Expected shape {reshape_size}, got {sample.shape}"
+
+
     def __getitem__(self, index):
         filename = self.filepaths[index]
         filename_slice = self.filepaths_slices[index]
@@ -64,14 +104,15 @@ class MultiviewDataset(Dataset):
         else:
             sample = self.get_slices(filename)
             assert sample.shape[0] == self.n_slices, f"Expected {self.n_slices}, got {sample.shape[0]}"
-            if sample.shape != (self.n_slices, 250, 1000):
-                print(f"Expected shape {(self.n_slices, 250, 1000)}, got {sample.shape} - resizing")
-                sample = resize(sample, (self.n_slices, 250, 1000))
+            if sample.shape != self.shape:
+                print(f"Expected shape {self.shape}, got {sample.shape} - resizing")
+                sample = resize(sample, self.shape)
             if self.store_pp:
                 os.makedirs(os.path.dirname(filename_slice), exist_ok=True)
+                sample = sample.astype(np.float16)
                 np.save(filename_slice, sample)
 
-        assert sample.shape == (self.n_slices, 250, 1000), f"Expected shape {(self.n_slices, 250, 1000)}, got {sample.shape}"
+        assert sample.shape == self.shape, f"Expected shape {self.shape}, got {sample.shape}"
 
         if DEBUG:
             import matplotlib.pyplot as plt
@@ -87,7 +128,7 @@ class MultiviewDataset(Dataset):
         if self.transform is not None:
             sample_torch = self.transform(sample_torch)
 
-        assert sample_torch.shape == (self.n_slices, 250, 1000), f"Expected shape {(self.n_slices, 250, 1000)}, got {sample_torch.shape}"
+        assert sample_torch.shape == self.shape, f"Expected shape {self.shape}, got {sample_torch.shape}"
         if DEBUG:
             import matplotlib.pyplot as plt
 

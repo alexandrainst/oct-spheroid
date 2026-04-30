@@ -19,14 +19,17 @@ class CancerSphere3DDataset(Dataset):
     def __init__(
         self,
         df,
-        n_classes,
+        n_classes:int,
         reshape_size,
         transform=None,
-        labels_dict={"CTRL": 0, "25": 1, "100": 2},
-        store_pp=True,
-        store_pp_path="/dsv/cancer",
+        labels_dict:dict={"CTRL": 0, "25": 1, "100": 2},
+        store_pp:bool=True,
+        store_pp_path:str="/dsv/cancer",
         task: str = "classification",
-        return_filename=False,
+        return_filename:bool=False,
+        mean:list = [9.713811],
+        std:list = [10.071295],
+        normalize:bool=False,
     ):
         self.labels_dict = labels_dict
         key_list = list(labels_dict.keys())
@@ -40,9 +43,9 @@ class CancerSphere3DDataset(Dataset):
         self.transform = transform
         self.reshape_size = reshape_size
         self.resolution = ("_").join((str(reshape_size[0]), str(reshape_size[1]), str(reshape_size[2])))
-        self.mean = [9.713811]
-        self.std = [10.071295]
-
+        self.mean = mean
+        self.std = std
+        self.normalize = normalize
         self.store_pp = store_pp  # boolean to store preprocessed images
         self.store_pp_path = store_pp_path  # path to store preprocessed images
         self.to_tensor = transforms.Compose(
@@ -75,17 +78,17 @@ class CancerSphere3DDataset(Dataset):
         Iterates over the dataset and preprocesses the images in order to save them as numpy arrays
         """
         for i in tqdm(range(len(self.df)), desc="Preprocessing images", position=0, leave=True, total=len(self.df)):
-            img_name = self.df.iloc[i, 1]
-            new_img_name = img_name.split(".m")[0] + "_" + str(self.resolution) + ".npy"
-            # replace "data" with "data_tmp"
-            new_img_name = new_img_name.replace("data", "data/data_tmp")
-            if os.path.exists(new_img_name):
+            img_path = self.df.iloc[i, -2]
+            pp_img_path = os.path.join(self.store_pp_path, *img_path.split("/")[-3:])
+            pp_img_path = os.path.splitext(pp_img_path)[0] + "_" + str(self.resolution) + ".npy"
+            if os.path.exists(pp_img_path):
                 continue
-            sample = self.load_matfile(img_name)
+            sample = self.load_matfile(img_path)
             sample = resize(sample, self.reshape_size)
             sample = sample.astype(np.float16)
-            os.makedirs(os.path.dirname(new_img_name), exist_ok=True)
-            np.save(new_img_name, sample)
+            assert sample.dtype == np.float16, f"{self.__class__.__name__} Expected float16, got {sample.dtype}"
+            os.makedirs(os.path.dirname(pp_img_path), exist_ok=True)
+            np.save(pp_img_path, sample)
 
     def __getitem__(self, index):
         # row = self.df.iloc[index,0]
@@ -102,7 +105,7 @@ class CancerSphere3DDataset(Dataset):
             # print(new_img_name)
             assert sample.dtype == np.float16, f"{self.__class__.__name__} Expected float16, got {sample.dtype}"
         except FileNotFoundError:
-            print(self.__class__.__name__, "File not found, loading from mat file and saving as npy to pre-process-path")
+            print(self.__class__.__name__, f"File not found, loading from mat file save to - {pp_img_path}")
             sample = self.load_matfile(img_path)
             sample = resize(sample, self.reshape_size)
             # cast to float16
@@ -120,6 +123,8 @@ class CancerSphere3DDataset(Dataset):
             sample = sample["image"]
 
         sample = self.to_tensor(sample)
+        if self.normalize:
+            sample = transforms.Normalize(mean=self.mean, std=self.std)(sample)
         sample = torch.unsqueeze(sample, 0)  # TODO: check if we could move that in the collate function and pre-allcate the memory there
         assert sample.dtype == torch.float16, f"{self.__class__.__name__} Expected float16, got {sample.dtype}"
         if self.task == "classification":

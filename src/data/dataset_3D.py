@@ -64,9 +64,8 @@ class CancerSphere3DDataset(Dataset):
             try:
                 img = mat73.loadmat(path)
                 # print('Loaded with mat73')
-            except TypeError:
-                print("Cannot load file!!")
-                print(path)
+            except TypeError as exc:
+                raise TypeError(f"Cannot load file: {path}") from exc
 
         return img["tdData"]
 
@@ -105,22 +104,16 @@ class CancerSphere3DDataset(Dataset):
             # print(new_img_name)
             assert sample.dtype == np.float16, f"{self.__class__.__name__} Expected float16, got {sample.dtype}"
         except FileNotFoundError:
-            print(self.__class__.__name__, f"File not found, loading from mat file save to - {pp_img_path}")
-            sample = self.load_matfile(img_path)
+            print(self.__class__.__name__, f"File not found, loading from mat file and saving to - {pp_img_path}")
             sample = resize(sample, self.reshape_size)
             # cast to float16
             sample = sample.astype(np.float16)
             assert sample.dtype == np.float16, f"{self.__class__.__name__} Expected float16, got {sample.dtype}"
             os.makedirs(os.path.dirname(pp_img_path), exist_ok=True)
             np.save(pp_img_path, sample)
-        except Exception as e:
-            print(e)
-            raise e
 
         if self.transform is not None:
             raise NotImplementedError(f"{self.__class__.__name__} Before applying transforms, we need to check if they are compatible with float16")
-            sample = self.transform(**{"image": sample})
-            sample = sample["image"]
 
         sample = self.to_tensor(sample)
         if self.normalize:

@@ -38,8 +38,8 @@ class MultiviewDataset(Dataset):
         assert n_slices == shape[0], f"Expected n_slices to be {shape[0]}, got {n_slices}"
         self.transform = transform
         if n_classes == 2:
-            k = list(labels_dict.keys())
-            self.df = df[(df["labels"] == k[0]) | (df["labels"] == k[1])]
+            label_keys = list(labels_dict.keys())
+            self.df = df[(df["labels"] == label_keys[0]) | (df["labels"] == label_keys[1])]
         else:
             self.df = df
 
@@ -152,8 +152,9 @@ class MultiviewDataset(Dataset):
             try:
                 img = mat73.loadmat(path)
                 # print('Loaded with mat73')
-            except NotImplementedError:
+            except NotImplementedError as exc:
                 print("Cannot load file!!")
+                raise NotImplementedError(f"Cannot load MAT file: {path}") from exc
 
         return img["tdData"]
 
@@ -172,8 +173,8 @@ class MultiviewDataset(Dataset):
             else:
                 idx = i * 2
 
-                for i in range(vol.shape[0]):
-                    sliced_input_2drot[i, :, :] = rotate(vol[i, :, :], 45)
+                for slice_idx in range(vol.shape[0]):
+                    sliced_input_2drot[slice_idx, :, :] = rotate(vol[slice_idx, :, :], 45)
                 sliced_input[idx] = sliced_input_2drot[:, median_pos[1], :]
                 sliced_input[idx + 1] = sliced_input_2drot[:, :, median_pos[2]]
 

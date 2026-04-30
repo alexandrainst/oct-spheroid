@@ -5,6 +5,7 @@ DATASET:
   WIDTH: 500
   HEIGHT: 500
   DEPTH: 200
+  DIM: 3
   # LENGHT: 32 --- IGNORE ---
   TENSOR_DTYPE: !torch float16
   TARGET_DTYPE: !torch long

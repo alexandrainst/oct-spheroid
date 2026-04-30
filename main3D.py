@@ -22,7 +22,6 @@ if __name__ == "__main__":
     config = config_handler(args.config)
 
     print(config)
-    DIM = 3  # TODO move to config
     assert torch.cuda.is_available(), "CUDA not available"
 
 
@@ -67,7 +66,7 @@ if __name__ == "__main__":
             use_prefetcher=True,
             mean=traindataset.mean,
             std=traindataset.std,
-            dim=DIM,
+            dim=config["DATASET"]["DIM"],
             is_training=True,
             pin_memmory=config["DATALOADER"]["TRAIN"]["PIN_MEMORY"],
             tensor_dtype=config["DATASET"]["TENSOR_DTYPE"],
@@ -100,7 +99,7 @@ if __name__ == "__main__":
             use_prefetcher=True,
             mean=valdataset.mean,
             std=valdataset.std,
-            dim=DIM,
+            dim=config["DATASET"]["DIM"],
             is_training=False,
             pin_memmory=config["DATALOADER"]["VAL"]["PIN_MEMORY"],
             tensor_dtype=config["DATASET"]["TENSOR_DTYPE"],

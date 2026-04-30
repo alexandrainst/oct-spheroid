@@ -1,4 +1,10 @@
-from .config import MultiLibDumper, MultiLibLoader, config_handler, load_yaml, merge_configs
+from .config import (
+    MultiLibDumper,
+    MultiLibLoader,
+    config_handler,
+    load_yaml,
+    merge_configs,
+)
 from .seed import set_random_seed
 
 __all__ = [

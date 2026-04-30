@@ -13,7 +13,7 @@ DATASET:
   STORE_PP: true
   STORE_PP_PATH: ./data_pp/3D/
 DATALOADER:
-  USE_ND_DATALOADER: True
+  USE_ND_DATALOADER: true
   TRAIN:
     BATCH_SIZE: 2
     PIN_MEMORY: false

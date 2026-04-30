@@ -1,8 +1,6 @@
 import argparse
-import random
 from datetime import datetime
 
-import numpy as np
 import pandas as pd
 import torch
 import yaml
@@ -13,7 +11,6 @@ from src.data.dataset_3D import CancerSphere3DDataset
 from src.models.train_model import train3D
 from src.utils import MultiLibDumper, config_handler, set_random_seed
 
-
 if __name__ == "__main__":
     # read yaml file
     parser = argparse.ArgumentParser(description="3D Model Training")
@@ -23,7 +20,6 @@ if __name__ == "__main__":
 
     print(config)
     assert torch.cuda.is_available(), "CUDA not available"
-
 
     # set random seed
     set_random_seed(45)

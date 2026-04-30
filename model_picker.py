@@ -8,7 +8,7 @@ def get_best_epoch(tensorboard_file, metric_name):
     event_acc.Reload()
 
     if metric_name not in event_acc.Tags()["scalars"]:
-        print(f"Metric {metric_name} not found in TensorBoard file.")
+        print(f"Metric {metric_name} not in TensorBoard file.")
         return None, None
 
     best_epoch = None

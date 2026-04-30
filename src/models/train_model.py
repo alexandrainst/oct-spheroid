@@ -44,7 +44,7 @@ def train_multiview(traindataload, valdataload, writer, config):
         val_loss = []
         val_acc = []
         net.train()
-        for step, (img, label) in tqdm(enumerate(traindataload), desc=f"Train epoch {epoch+1}/{total_epochs}", total=len(traindataload)):
+        for step, (img, label) in tqdm(enumerate(traindataload), desc=f"Train epoch {epoch + 1}/{total_epochs}", total=len(traindataload)):
             optimizer.zero_grad()
             # if DEBUG:
             #     import torchvision
@@ -68,7 +68,7 @@ def train_multiview(traindataload, valdataload, writer, config):
             writer["writer"].add_scalar("accuracy/train_step", acc, log_step)
 
         with torch.no_grad():
-            for step, (img, label) in tqdm(enumerate(valdataload), desc=f"Validation epoch {epoch+1}/{total_epochs}", total=len(valdataload)):
+            for step, (img, label) in tqdm(enumerate(valdataload), desc=f"Validation epoch {epoch + 1}/{total_epochs}", total=len(valdataload)):
                 net.eval()
                 img = img.to(device, dtype=torch.float)
                 label = label.to(device)
@@ -111,7 +111,7 @@ def train3D(traindataload, valdataload, writer, config):
         train_acc = []
         val_loss = []
         val_acc = []
-        for step in tqdm(range(len(traindataload)), desc=f"Train epoch {epoch+1}/{total_epochs}"):
+        for step in tqdm(range(len(traindataload)), desc=f"Train epoch {epoch + 1}/{total_epochs}"):
             img, label = next(traindataloader_iter)
             img = img.to(device, dtype=torch.float16)
             net.train()
@@ -140,7 +140,7 @@ def train3D(traindataload, valdataload, writer, config):
 
         with torch.no_grad():
             valdataloader_iter = iter(valdataload)
-            for step in tqdm(range(len(valdataload)), desc=f"Validation epoch {epoch+1}/{total_epochs}"):
+            for step in tqdm(range(len(valdataload)), desc=f"Validation epoch {epoch + 1}/{total_epochs}"):
                 img, label = next(valdataloader_iter)
                 img = img.to(device, dtype=torch.float16)
                 net.eval()

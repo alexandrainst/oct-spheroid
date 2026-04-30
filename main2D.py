@@ -1,13 +1,9 @@
-import random
 from datetime import datetime
 
-import numpy as np
 import pandas as pd
 import torch
 import yaml
 from torch.utils.data import DataLoader
-
-# from volumentations import *
 from torch.utils.tensorboard import SummaryWriter
 from torchvision.transforms import v2
 
@@ -17,9 +13,6 @@ from src.data.dataset_multiview import MultiviewDataset
 from src.models.train_model import train_multiview
 from src.utils import MultiLibDumper, config_handler, set_random_seed
 
-
-
-
 if __name__ == "__main__":
     # rad yaml file
     config = config_handler("config/experiments/config_2D.yaml")
@@ -27,7 +20,7 @@ if __name__ == "__main__":
     print(config)
     DEVICE = torch.device("cuda:1")
     assert torch.cuda.is_available(), "CUDA not available"
-    
+
     # set random seed
     set_random_seed(45)
 
@@ -47,11 +40,12 @@ if __name__ == "__main__":
     )
 
     traindataset = MultiviewDataset(
-        df=train_df, n_classes=config["MODEL"]["NUMBER_OF_CLASSES"],
+        df=train_df,
+        n_classes=config["MODEL"]["NUMBER_OF_CLASSES"],
         transform=transforms_train,
         store_pp=config["DATASET"]["STORE_PP"],
         store_pp_path=config["DATASET"]["STORE_PP_PATH"],
-        )
+    )
     traindataloader = DataLoader(
         traindataset, batch_size=config["DATALOADER"]["TRAIN"]["BATCH_SIZE"], shuffle=True, num_workers=config["DATALOADER"]["TRAIN"]["NUM_WORKERS"]
     )

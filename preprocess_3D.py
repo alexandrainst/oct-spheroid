@@ -17,7 +17,6 @@ if __name__ == "__main__":
 
     train_df = pd.read_csv("./data/train_no_outliers.csv")
     val_df = pd.read_csv("./data/val_no_outliers.csv")
-    
 
     if config["GENERAL"]["TASK"] == "classification":
         labels_dict = {

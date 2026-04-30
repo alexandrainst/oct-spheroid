@@ -45,12 +45,12 @@ def evaluate(testDataLoader, weights):
                 preds.append(torch.max(pred, 1)[1].item())
                 labels.append(label.item())
                 w.write(
-                    f"True label for this volume: {label.item()}, prediction for this volume: {torch.max(pred,1)[1].item()} with probability {pred}. \n"
+                    f"True label for this volume: {label.item()}, prediction for this volume: {torch.max(pred, 1)[1].item()} with probability {pred}. \n"
                 )  # for a volume {filename}
                 # print(f'True label for this volume: {label.item()}, prediction for this volume: {torch.max(pred,1)[1].item()}')
                 acc.append(single_acc)
-        w.write(f"Mean accuracy across test dataset:{np.mean(acc)} \n")
-        print(f"Mean accuracy across test dataset:{np.mean(acc)}")
+        w.write(f"Mean accuracy across test dataset: {np.mean(acc)} \n")
+        print(f"Mean accuracy across test dataset: {np.mean(acc)}")
 
     confusion_matrix = metrics.confusion_matrix(labels, preds)
     cm_display = metrics.ConfusionMatrixDisplay(confusion_matrix=confusion_matrix, display_labels=["CTRL", "25", "100"])
@@ -98,11 +98,11 @@ def evaluate2D(testdataset, weights, n_classes):
                 single_acc = accuracy(pred=pred, label=label)
                 preds.append(torch.max(pred, 1)[1].item())
                 labels.append(label.item())
-                w.write(f"True label for this volume: {label.item()}, prediction for this volume: {torch.max(pred,1)[1].item()} for a volume {filename}. \n")
+                w.write(f"True label for this volume: {label.item()}, prediction for this volume: {torch.max(pred, 1)[1].item()} for a volume {filename}. \n")
                 # print(f'True label for this volume: {label.item()}, prediction for this volume: {torch.max(pred,1)[1].item()}')
                 acc.append(single_acc)
-        w.write(f"Mean accuracy across test dataset:{np.mean(acc)} \n")
-        print(f"Mean accuracy across test dataset:{np.mean(acc)}")
+        w.write(f"Mean accuracy across test dataset: {np.mean(acc)} \n")
+        print(f"Mean accuracy across test dataset: {np.mean(acc)}")
 
     confusion_matrix = metrics.confusion_matrix(labels, preds)
     if n_classes == 3:

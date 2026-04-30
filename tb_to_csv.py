@@ -9,13 +9,13 @@ def write_to_csv(tensorboard_file, metric_name, output_file):
     event_acc.Reload()
 
     if metric_name not in event_acc.Tags()["scalars"]:
-        print(f"Metric {metric_name} not found in {tensorboard_file}.")
+        print(f"Metric {metric_name} not in {tensorboard_file}.")
         return
 
     with open(output_file, "w") as f:
         f.write("epoch,value\n")
         for scalar in event_acc.Scalars(metric_name):
-            f.write(f"{scalar.step},{scalar.value}\n")
+            f.write(f"{scalar.step}, {scalar.value}\n")
 
 
 def find_event_files(directory):

@@ -23,7 +23,7 @@ class MultiviewDataset(Dataset):
         store_pp=True,
         store_pp_path="/dsv/cancer",
         norm=True,
-        shape = (4, 250, 1000),
+        shape=(4, 250, 1000),
         mean=[12.4361, 12.4864, 12.4278, 12.3149],
         std=[10.7506, 10.7760, 9.8911, 9.9736],
     ):
@@ -62,7 +62,7 @@ class MultiviewDataset(Dataset):
         self.labels = [self.labels_dict[i] for i in self.labels]
 
     def preprocess(self):
-        for i in tqdm(range(len(self.df)), desc="Preprocessing images", position=0, leave=True, total=len(self.df)):            
+        for i in tqdm(range(len(self.df)), desc="Preprocessing images", position=0, leave=True, total=len(self.df)):
             filename = self.filepaths[i]
             filename_slice = self.filepaths_slices[i]
 
@@ -80,8 +80,6 @@ class MultiviewDataset(Dataset):
 
             assert sample.shape == self.shape, f"Expected shape {self.shape}, got {sample.shape}"
 
-
-            
             # try:
             #     sample = np.load(pp_img_path)
             #     assert sample.shape == reshape_size, f"Expected shape {reshape_size}, got {sample.shape}"
@@ -93,7 +91,6 @@ class MultiviewDataset(Dataset):
             #     # cast to float16
             #     sample = sample.astype(np.float16)
             #     assert sample.shape == reshape_size, f"Expected shape {reshape_size}, got {sample.shape}"
-
 
     def __getitem__(self, index):
         filename = self.filepaths[index]

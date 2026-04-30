@@ -15,10 +15,11 @@ if __name__ == "__main__":
     val_df = pd.read_csv("./data/val_no_outliers.csv")
 
     traindataset = MultiviewDataset(
-        df=train_df, n_classes=config["MODEL"]["NUMBER_OF_CLASSES"],
+        df=train_df,
+        n_classes=config["MODEL"]["NUMBER_OF_CLASSES"],
         transform=None,
         store_pp_path=config["DATASET"]["STORE_PP_PATH"],
-        )
+    )
     traindataset.preprocess()
 
     valdataset = MultiviewDataset(

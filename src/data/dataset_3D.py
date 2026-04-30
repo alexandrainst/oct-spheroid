@@ -19,17 +19,17 @@ class CancerSphere3DDataset(Dataset):
     def __init__(
         self,
         df,
-        n_classes:int,
+        n_classes: int,
         reshape_size,
         transform=None,
-        labels_dict:dict={"CTRL": 0, "25": 1, "100": 2},
-        store_pp:bool=True,
-        store_pp_path:str="/dsv/cancer",
+        labels_dict: dict = {"CTRL": 0, "25": 1, "100": 2},
+        store_pp: bool = True,
+        store_pp_path: str = "/dsv/cancer",
         task: str = "classification",
-        return_filename:bool=False,
-        mean:list = [9.713811],
-        std:list = [10.071295],
-        normalize:bool=False,
+        return_filename: bool = False,
+        mean: list = [9.713811],
+        std: list = [10.071295],
+        normalize: bool = False,
     ):
         self.labels_dict = labels_dict
         key_list = list(labels_dict.keys())

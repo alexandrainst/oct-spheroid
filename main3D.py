@@ -11,7 +11,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from src.data.dataset_3D import CancerSphere3DDataset
 from src.models.train_model import train3D
-from src.utils.config import MultiLibDumper, config_handler, set_random_seed
+from src.utils import MultiLibDumper, config_handler, set_random_seed
 
 
 if __name__ == "__main__":
@@ -25,7 +25,6 @@ if __name__ == "__main__":
     DIM = 3  # TODO move to config
     assert torch.cuda.is_available(), "CUDA not available"
 
-    DATASET_LENGTH = 32
 
     # set random seed
     set_random_seed(45)
@@ -50,42 +49,72 @@ if __name__ == "__main__":
         }
 
     traindataset = CancerSphere3DDataset(
-        df=train_df, n_classes=config["MODEL"]["NUMBER_OF_CLASSES"], reshape_size=(200, 500, 500), task=config["GENERAL"]["TASK"], labels_dict=labels_dict
+        df=train_df,
+        n_classes=config["MODEL"]["NUMBER_OF_CLASSES"],
+        reshape_size=(200, 500, 500),
+        task=config["GENERAL"]["TASK"],
+        store_pp=config["DATASET"]["STORE_PP"],
+        store_pp_path=config["DATASET"]["STORE_PP_PATH"],
+        labels_dict=labels_dict,
+        normalize=not config["DATALOADER"]["USE_ND_DATALOADER"],  # if using nd_dataloader, we will normalize in the dataloader
     )
-    traindataloader = nd_Dataloader(
-        traindataset,
-        batch_size=config["DATALOADER"]["TRAIN"]["BATCH_SIZE"],
-        num_workers=config["DATALOADER"]["TRAIN"]["NUM_WORKERS"],
-        memory_format=config["DATASET"]["MEMORY_FORMAT"],
-        use_prefetcher=True,
-        mean=traindataset.mean,
-        std=traindataset.std,
-        dim=DIM,
-        is_training=True,
-        pin_memmory=config["DATALOADER"]["TRAIN"]["PIN_MEMORY"],
-        tensor_dtype=config["DATASET"]["TENSOR_DTYPE"],
-        target_dtype=config["DATASET"]["TARGET_DTYPE"],
-        batch_norm=True,
-    )
+    if config["DATALOADER"]["USE_ND_DATALOADER"]:
+        traindataloader = nd_Dataloader(
+            traindataset,
+            batch_size=config["DATALOADER"]["TRAIN"]["BATCH_SIZE"],
+            num_workers=config["DATALOADER"]["TRAIN"]["NUM_WORKERS"],
+            memory_format=config["DATASET"]["MEMORY_FORMAT"],
+            use_prefetcher=True,
+            mean=traindataset.mean,
+            std=traindataset.std,
+            dim=DIM,
+            is_training=True,
+            pin_memmory=config["DATALOADER"]["TRAIN"]["PIN_MEMORY"],
+            tensor_dtype=config["DATASET"]["TENSOR_DTYPE"],
+            target_dtype=config["DATASET"]["TARGET_DTYPE"],
+            batch_norm=True,
+        )
+    else:
+        traindataloader = torch.utils.data.DataLoader(
+            traindataset,
+            batch_size=config["DATALOADER"]["TRAIN"]["BATCH_SIZE"],
+            shuffle=True,
+            num_workers=config["DATALOADER"]["TRAIN"]["NUM_WORKERS"],
+            pin_memory=config["DATALOADER"]["TRAIN"]["PIN_MEMORY"],
+        )
 
     valdataset = CancerSphere3DDataset(
-        df=val_df, n_classes=config["MODEL"]["NUMBER_OF_CLASSES"], reshape_size=(200, 500, 500), task=config["GENERAL"]["TASK"], labels_dict=labels_dict
+        df=val_df,
+        n_classes=config["MODEL"]["NUMBER_OF_CLASSES"],
+        reshape_size=(200, 500, 500),
+        task=config["GENERAL"]["TASK"],
+        labels_dict=labels_dict,
+        normalize=not config["DATALOADER"]["USE_ND_DATALOADER"],  # if using nd_dataloader, we will normalize in the dataloader
     )
-    valdataloader = nd_Dataloader(
-        valdataset,
-        batch_size=config["DATALOADER"]["VAL"]["BATCH_SIZE"],
-        num_workers=config["DATALOADER"]["VAL"]["NUM_WORKERS"],
-        memory_format=config["DATASET"]["MEMORY_FORMAT"],
-        use_prefetcher=True,
-        mean=valdataset.mean,
-        std=valdataset.std,
-        dim=DIM,
-        is_training=False,
-        pin_memmory=config["DATALOADER"]["VAL"]["PIN_MEMORY"],
-        tensor_dtype=config["DATASET"]["TENSOR_DTYPE"],
-        target_dtype=config["DATASET"]["TARGET_DTYPE"],
-        batch_norm=True,
-    )
+    if config["DATALOADER"]["USE_ND_DATALOADER"]:
+        valdataloader = nd_Dataloader(
+            valdataset,
+            batch_size=config["DATALOADER"]["VAL"]["BATCH_SIZE"],
+            num_workers=config["DATALOADER"]["VAL"]["NUM_WORKERS"],
+            memory_format=config["DATASET"]["MEMORY_FORMAT"],
+            use_prefetcher=True,
+            mean=valdataset.mean,
+            std=valdataset.std,
+            dim=DIM,
+            is_training=False,
+            pin_memmory=config["DATALOADER"]["VAL"]["PIN_MEMORY"],
+            tensor_dtype=config["DATASET"]["TENSOR_DTYPE"],
+            target_dtype=config["DATASET"]["TARGET_DTYPE"],
+            batch_norm=True,
+        )
+    else:
+        valdataloader = torch.utils.data.DataLoader(
+            valdataset,
+            batch_size=config["DATALOADER"]["VAL"]["BATCH_SIZE"],
+            shuffle=False,
+            num_workers=config["DATALOADER"]["VAL"]["NUM_WORKERS"],
+            pin_memory=config["DATALOADER"]["VAL"]["PIN_MEMORY"],
+        )
 
     now_str = datetime.now().strftime("%Y%m%d-%H%M%S")
     if config["GENERAL"]["TASK"] == "classification":
@@ -101,5 +130,3 @@ if __name__ == "__main__":
         yaml.dump(config, file, Dumper=MultiLibDumper, default_flow_style=False)
 
     train3D(traindataloader, valdataloader, writer=writer_dict, config=config)
-
-    # evaluate(testdataloader,'./models/model_no_outliers_test.pt', writer=writer_dict)

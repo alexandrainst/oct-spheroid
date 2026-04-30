@@ -7,7 +7,9 @@ DATASET:
   DEPTH: 200
   TENSOR_DTYPE: !torch float16
   TARGET_DTYPE: !torch long
-  MEMORY_FORMAT: !torch contiguous_format
+  MEMORY_FORMAT: !torch contiguous_format,
+  STORE_PP: true
+  STORE_PP_PATH: ./data_pp/2D/
 DATALOADER:
   TRAIN:
     BATCH_SIZE: 12

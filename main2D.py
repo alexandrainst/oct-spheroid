@@ -46,12 +46,23 @@ if __name__ == "__main__":
         ]
     )
 
-    traindataset = MultiviewDataset(df=train_df, n_classes=config["MODEL"]["NUMBER_OF_CLASSES"], transform=transforms_train)
+    traindataset = MultiviewDataset(
+        df=train_df, n_classes=config["MODEL"]["NUMBER_OF_CLASSES"],
+        transform=transforms_train,
+        store_pp=config["DATASET"]["STORE_PP"],
+        store_pp_path=config["DATASET"]["STORE_PP_PATH"],
+        )
     traindataloader = DataLoader(
         traindataset, batch_size=config["DATALOADER"]["TRAIN"]["BATCH_SIZE"], shuffle=True, num_workers=config["DATALOADER"]["TRAIN"]["NUM_WORKERS"]
     )
 
-    valdataset = MultiviewDataset(df=val_df, n_classes=config["MODEL"]["NUMBER_OF_CLASSES"], transform=transforms_val)
+    valdataset = MultiviewDataset(
+        df=val_df,
+        n_classes=config["MODEL"]["NUMBER_OF_CLASSES"],
+        transform=transforms_val,
+        store_pp=config["DATASET"]["STORE_PP"],
+        store_pp_path=config["DATASET"]["STORE_PP_PATH"],
+    )
     valdataloader = DataLoader(
         valdataset, batch_size=config["DATALOADER"]["VAL"]["BATCH_SIZE"], shuffle=False, num_workers=config["DATALOADER"]["VAL"]["NUM_WORKERS"]
     )

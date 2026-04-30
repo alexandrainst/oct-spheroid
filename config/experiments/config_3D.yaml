@@ -5,10 +5,14 @@ DATASET:
   WIDTH: 500
   HEIGHT: 500
   DEPTH: 200
+  # LENGHT: 32 --- IGNORE ---
   TENSOR_DTYPE: !torch float16
   TARGET_DTYPE: !torch long
   MEMORY_FORMAT: !torch contiguous_format
+  STORE_PP: true
+  STORE_PP_PATH: ./data_pp/3D/
 DATALOADER:
+  USE_ND_DATALOADER: True
   TRAIN:
     BATCH_SIZE: 2
     PIN_MEMORY: false

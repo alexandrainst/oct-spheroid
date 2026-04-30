@@ -116,7 +116,7 @@ def train3D(traindataload, valdataload, writer, config):
             img = img.to(device, dtype=torch.float16)
             net.train()
             label = label.to(device)
-            with torch.cuda.amp.autocast(dtype=torch.float16):
+            with torch.amp.autocast(device_type="cuda", dtype=torch.float16):
                 pred = net.forward(img)
                 # TODO check if we need a activation funciton to limit the output to 0-1 e.g sigmoid or does it harm the model training
                 if config["GENERAL"]["TASK"] == "regression":
@@ -145,7 +145,7 @@ def train3D(traindataload, valdataload, writer, config):
                 img = img.to(device, dtype=torch.float16)
                 net.eval()
                 label = label.to(device)
-                with torch.cuda.amp.autocast(dtype=torch.float16):
+                with torch.amp.autocast(device_type="cuda", dtype=torch.float16):
                     pred = net.forward(img)
                     # TODO check if we need a activation funciton to limit the output to 0-1 e.g sigmoid or does it harm the model training
                     if config["GENERAL"]["TASK"] == "regression":

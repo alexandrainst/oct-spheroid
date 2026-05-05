@@ -94,7 +94,11 @@ target/
 *.pt
 
 # logs
-runs/
+/runs/
 attention_maps/
 debug_images_2D/
-reports/
+/reports/
+
+/.devcontainer/
+/.venv/
+/data

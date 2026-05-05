@@ -2,8 +2,8 @@ import argparse
 
 import pandas as pd
 
-from src.data import CancerSphere3DDataset
-from src.utils import config_handler
+from oct.data import CancerSphere3DDataset
+from oct.utils import config_handler
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="3D Dataset Preprocessing")

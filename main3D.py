@@ -7,9 +7,9 @@ import yaml
 from nd_dataloader import Dataloader as nd_Dataloader
 from torch.utils.tensorboard import SummaryWriter
 
-from src.data.dataset_3D import CancerSphere3DDataset
-from src.models.train_model import train3D
-from src.utils import MultiLibDumper, config_handler, set_random_seed
+from oct.data.dataset_3D import CancerSphere3DDataset
+from oct.models.train_model import train3D
+from oct.utils import MultiLibDumper, config_handler, set_random_seed
 
 if __name__ == "__main__":
     # read yaml file
@@ -52,6 +52,8 @@ if __name__ == "__main__":
         store_pp_path=config["DATASET"]["STORE_PP_PATH"],
         labels_dict=labels_dict,
         normalize=not config["DATALOADER"]["USE_ND_DATALOADER"],  # if using nd_dataloader, we will normalize in the dataloader
+        mean=config["DATASET"]["MEAN"],
+        std=config["DATASET"]["STD"],
     )
     if config["DATALOADER"]["USE_ND_DATALOADER"]:
         traindataloader = nd_Dataloader(
@@ -85,6 +87,8 @@ if __name__ == "__main__":
         task=config["GENERAL"]["TASK"],
         labels_dict=labels_dict,
         normalize=not config["DATALOADER"]["USE_ND_DATALOADER"],  # if using nd_dataloader, we will normalize in the dataloader
+        mean=config["DATASET"]["MEAN"],
+        std=config["DATASET"]["STD"],
     )
     if config["DATALOADER"]["USE_ND_DATALOADER"]:
         valdataloader = nd_Dataloader(

@@ -7,11 +7,9 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from torchvision.transforms import v2
 
-from src.data.dataset_multiview import MultiviewDataset
-
-# from src.models.generate_model import main
-from src.models.train_model import train_multiview
-from src.utils import MultiLibDumper, config_handler, set_random_seed
+from oct.data.dataset_multiview import MultiviewDataset
+from oct.models.train_model import train_multiview
+from oct.utils import MultiLibDumper, config_handler, set_random_seed
 
 if __name__ == "__main__":
     # rad yaml file
@@ -30,12 +28,12 @@ if __name__ == "__main__":
 
     transforms_train = v2.Compose(
         [
-            v2.Normalize(mean=[12.4361, 12.4864, 12.4278, 12.3149], std=[10.7506, 10.7760, 9.8911, 9.9736]),
+            v2.Normalize(mean=config["DATASET"]["MEAN"], std=config["DATASET"]["STD"]),
         ]
     )
     transforms_val = v2.Compose(
         [
-            v2.Normalize(mean=[12.4361, 12.4864, 12.4278, 12.3149], std=[10.7506, 10.7760, 9.8911, 9.9736]),
+            v2.Normalize(mean=config["DATASET"]["MEAN"], std=config["DATASET"]["STD"]),
         ]
     )
 
@@ -45,6 +43,8 @@ if __name__ == "__main__":
         transform=transforms_train,
         store_pp=config["DATASET"]["STORE_PP"],
         store_pp_path=config["DATASET"]["STORE_PP_PATH"],
+        mean=config["DATASET"]["MEAN"],
+        std=config["DATASET"]["STD"],
     )
     traindataloader = DataLoader(
         traindataset, batch_size=config["DATALOADER"]["TRAIN"]["BATCH_SIZE"], shuffle=True, num_workers=config["DATALOADER"]["TRAIN"]["NUM_WORKERS"]
@@ -56,6 +56,8 @@ if __name__ == "__main__":
         transform=transforms_val,
         store_pp=config["DATASET"]["STORE_PP"],
         store_pp_path=config["DATASET"]["STORE_PP_PATH"],
+        mean=config["DATASET"]["MEAN"],
+        std=config["DATASET"]["STD"],
     )
     valdataloader = DataLoader(
         valdataset, batch_size=config["DATALOADER"]["VAL"]["BATCH_SIZE"], shuffle=False, num_workers=config["DATALOADER"]["VAL"]["NUM_WORKERS"]

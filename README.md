@@ -4,17 +4,22 @@ Analysis of OCT images of cancer spheroids.
 
 ## Installation Guide
 
-The steps below are tested for Linux and use the current project layout.
+The steps below are tested on Linux and match the current src-layout package configuration in pyproject.toml.
 
 ### 1. Prerequisites
 
 - Python 3.12+
 - Git
-- CUDA-capable GPU for 3D training (recommended)
+- CUDA-capable GPU (recommended for 3D training)
 
-### 2. Clone with submodules
+### 2. Clone repository with submodules
 
-If you already cloned without submodules, run:
+```bash
+git clone --recurse-submodules <repo-url>
+cd oct
+```
+
+If you already cloned without submodules:
 
 ```bash
 git submodule update --init --recursive
@@ -23,39 +28,44 @@ git submodule update --init --recursive
 ### 3. Create and activate a virtual environment
 
 ```bash
-python3 -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip setuptools wheel
 ```
 
-### 4. Install this project
-
-Install the project in editable mode (this uses dependencies from pyproject.toml):
+### 4. Install the project (editable)
 
 ```bash
 pip install -e .
 ```
 
-### 5. Install local submodules used by training
+### 5. Install local training dependency
 
-The training code imports nd_dataloader directly, so install the local submodule package:
+3D training uses nd_dataloader from the local submodule:
 
 ```bash
 pip install -e submodules/nd-dataloader
 ```
 
-Optional (only if you use M3d-Cam features):
+Optional (only if you use M3d-Cam functionality):
 
 ```bash
 pip install -e submodules/M3d-Cam
 ```
 
-### 6. Validate the environment
+### 6. Verify installation
 
 ```bash
-python test_environment.py
-python -c "import torch; print(torch.__version__, torch.cuda.is_available())"
+python -c "import oct; print('oct import ok')"
 python -c "import nd_dataloader; print('nd_dataloader import ok')"
+python -c "import torch; print(torch.__version__, torch.cuda.is_available())"
+python test_environment.py
+```
+
+### 7. Build distribution artifacts (optional)
+
+```bash
+uv build
 ```
 
 ## Quick Start
@@ -75,7 +85,7 @@ python main3D.py --config config/experiments/config_3D.yaml
 ### Train 2D multiview model
 
 ```bash
-python main2D.py
+python main2D.py --config config/experiments/config_2D.yaml
 ```
 
 ### Evaluate 3D model

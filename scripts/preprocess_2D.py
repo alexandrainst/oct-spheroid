@@ -2,8 +2,8 @@ import argparse
 
 import pandas as pd
 
-from src.data import MultiviewDataset
-from src.utils import config_handler
+from oct.data import MultiviewDataset
+from oct.utils import config_handler
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="2D Dataset Preprocessing")

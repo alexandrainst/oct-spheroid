@@ -1,7 +1,7 @@
 import pandas as pd
 import torch
 
-from src.data.make_dataset import CustomDataset2D
+from oct.data.make_dataset import CustomDataset2D
 
 if __name__ == "__main__":
     train_df = pd.read_csv("./data/train_no_outliers.csv")

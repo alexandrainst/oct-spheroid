@@ -1,0 +1,30 @@
+[project]
+name = "oct"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "mat73>=0.65",
+    "matplotlib>=3.10.9",
+    "pandas>=3.0.2",
+    "pre-commit>=4.6.0",
+    "pyyaml>=6.0.3",
+    "scikit-image>=0.26.0",
+    "scipy>=1.17.1",
+    "tensorboard>=2.20.0",
+    "torch>=2.11.0",
+    "torchvision>=0.26.0",
+]
+
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["oct*"]
+exclude = ["submodules*", "notebooks*", "runs*", "data*", "reports*", "references*", "config*", "models*", "scripts*", "tests*"]

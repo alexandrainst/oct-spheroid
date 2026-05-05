@@ -10,6 +10,8 @@ DATASET:
   MEMORY_FORMAT: !torch contiguous_format,
   STORE_PP: true
   STORE_PP_PATH: ./data_pp/2D/
+  MEAN: [12.4361, 12.4864, 12.4278, 12.3149]
+  STD: [10.7506, 10.7760, 9.8911, 9.9736]
 DATALOADER:
   TRAIN:
     BATCH_SIZE: 12

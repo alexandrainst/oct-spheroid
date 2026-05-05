@@ -10,10 +10,10 @@ from torch.utils.data import DataLoader
 from torchvision.transforms import v2
 from tqdm import tqdm
 
-from src.data.dataset_multiview import MultiviewDataset
-from src.models.multiview import SeparateChannelsResNet18
-from src.models.train_model import accuracy
-from src.utils.config import config_handler
+from oct.data.dataset_multiview import MultiviewDataset
+from oct.models.multiview import SeparateChannelsResNet18
+from oct.models.train_model import accuracy
+from oct.utils.config import config_handler
 
 if __name__ == "__main__":
     # read yaml file
@@ -26,12 +26,20 @@ if __name__ == "__main__":
 
     transforms_val = v2.Compose(
         [
-            v2.Normalize(mean=[12.4361, 12.4864, 12.4278, 12.3149], std=[10.7506, 10.7760, 9.8911, 9.9736]),
+            v2.Normalize(mean=config["DATASET"]["MEAN"], std=config["DATASET"]["STD"]),
         ]
     )
 
     test_df = pd.read_csv("./data/test_no_outliers.csv")
-    testdataset = MultiviewDataset(df=test_df, n_classes=3, return_filename=True, transform=transforms_val, labels_dict={"CTRL": 0, "25": 1, "100": 2})
+    testdataset = MultiviewDataset(
+        df=test_df,
+        n_classes=3,
+        return_filename=True,
+        transform=transforms_val,
+        labels_dict={"CTRL": 0, "25": 1, "100": 2},
+        mean=config["DATASET"]["MEAN"],
+        std=config["DATASET"]["STD"],
+    )
     testdataloader = DataLoader(testdataset, batch_size=1)
     acc = []
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

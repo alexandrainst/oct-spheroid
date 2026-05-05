@@ -9,10 +9,10 @@ from sklearn import metrics
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from src.data.dataset_3D import CancerSphere3DDataset
-from src.models.generate_model import generate_model
-from src.models.train_model import accuracy
-from src.utils.config import config_handler
+from oct.data.dataset_3D import CancerSphere3DDataset
+from oct.models.generate_model import generate_model
+from oct.models.train_model import accuracy
+from oct.utils.config import config_handler
 
 if __name__ == "__main__":
     # read yaml file
@@ -29,7 +29,15 @@ if __name__ == "__main__":
     }
     test_df = pd.read_csv("./data/test_no_outliers.csv")
     testdataset = CancerSphere3DDataset(
-        df=test_df, n_classes=3, reshape_size=(200, 500, 500), task=config["GENERAL"]["TASK"], labels_dict=labels_dict, return_filename=True
+        df=test_df,
+        n_classes=3,
+        reshape_size=(200, 500, 500),
+        task=config["GENERAL"]["TASK"],
+        labels_dict=labels_dict,
+        return_filename=True,
+        mean=config["DATASET"]["MEAN"],
+        std=config["DATASET"]["STD"],
+        normalize=False,
     )
     testdataloader = DataLoader(testdataset, batch_size=1)
 
@@ -58,7 +66,7 @@ if __name__ == "__main__":
                 img = img.to(device, dtype=torch.float)
                 # normalize
                 img = img.sub(testdataset.mean[0]).div(testdataset.std[0])
-                with torch.cuda.amp.autocast(dtype=torch.float16):
+                with torch.amp.autocast(dtype=torch.float16, device_type=device.type):
                     pred = net.forward(img)
                 single_acc = accuracy(pred=pred, label=label)
                 preds.append(torch.argmax(pred).item())

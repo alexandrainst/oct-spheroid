@@ -12,6 +12,8 @@ DATASET:
   MEMORY_FORMAT: !torch contiguous_format
   STORE_PP: true
   STORE_PP_PATH: ./data_pp/3D/
+  MEAN: [9.713811]
+  STD: [10.071295]
 DATALOADER:
   USE_ND_DATALOADER: true
   TRAIN:

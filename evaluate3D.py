@@ -48,7 +48,6 @@ if __name__ == "__main__":
     assert torch.cuda.is_available(), "CUDA not available"
 
     net = generate_model("resnet", 18, 3, 1, 128)
-    # net = net.float()
     net.load_state_dict(torch.load(args.weights, map_location=device))
     net = net.to(device)
     labels = []
@@ -81,8 +80,6 @@ if __name__ == "__main__":
     cm_display = metrics.ConfusionMatrixDisplay(confusion_matrix=confusion_matrix, display_labels=[0, 1, 2])
     plt.figure(figsize=(20, 20))
     cm_display.plot(im_kw={"vmin": 0, "vmax": 20})
-    # set range for colorbar
-
     plt.savefig(os.path.join(eval_path, "evaluation_confusion_matrix.png"))
     plt.clf()
     plt.close()

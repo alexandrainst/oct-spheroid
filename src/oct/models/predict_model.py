@@ -5,8 +5,8 @@ from sklearn import metrics
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from src.features.utils import SeparateChannelsResNet18
-from src.models.generate_model import generate_model
+from oct.features.utils import SeparateChannelsResNet18
+from oct.models.generate_model import generate_model
 
 
 def evaluate(testDataLoader, weights):

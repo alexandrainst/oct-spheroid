@@ -1,4 +1,4 @@
-from src.models.model_templates import resnet_3D
+from oct.models.model_templates import resnet_3D
 
 
 def generate_model(cnn_name, model_depth, n_classes, in_channels, sample_size):

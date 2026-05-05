@@ -5,8 +5,8 @@ import torch
 from tqdm import tqdm
 
 # import torchvision
-from src.models.generate_model import generate_model
-from src.models.multiview import SeparateChannelsResNet18V2
+from oct.models.generate_model import generate_model
+from oct.models.multiview import SeparateChannelsResNet18V2
 
 DEBUG = True
 

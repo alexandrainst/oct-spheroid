@@ -1,6 +1,7 @@
-import resnet
 import torch
 from torch import nn
+
+import oct.models.model_templates.resnet as resnet
 
 
 def generate_model(opt):

@@ -9,8 +9,8 @@ from sklearn import metrics
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from src.models.generate_model import generate_model
-from src.models.multiview import SeparateChannelsResNet18
+from oct.models.generate_model import generate_model
+from oct.models.multiview import SeparateChannelsResNet18
 
 
 def normalise_to_positive(vol):

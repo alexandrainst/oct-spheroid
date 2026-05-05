@@ -29,7 +29,7 @@ class CancerSphere3DDataset(Dataset):
         return_filename: bool = False,
         mean: list = [9.713811],
         std: list = [10.071295],
-        normalize: bool = False,
+        normalize: bool = False,  # if using nd_dataloader, we will normalize in the dataloader
     ):
         self.labels_dict = labels_dict
         key_list = list(labels_dict.keys())

@@ -41,7 +41,7 @@ cycler==0.12.1
     # via matplotlib
 distlib==0.4.0
     # via virtualenv
-dulwich==1.2.1
+dulwich==1.2.5
     # via poetry
 fastjsonschema==2.21.2
     # via poetry

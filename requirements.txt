@@ -112,7 +112,7 @@ more-itertools==11.0.2
     #   jaraco-functools
 mpmath==1.3.0
     # via sympy
-msgpack==1.1.2
+msgpack==1.2.1
     # via cachecontrol
 networkx==3.6.1
     # via

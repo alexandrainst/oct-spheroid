@@ -29,7 +29,7 @@ contourpy==1.3.3
     # via matplotlib
 crashtest==0.4.1
     # via cleo
-cryptography==47.0.0 ; sys_platform == 'linux'
+cryptography==50.0.0 ; sys_platform == 'linux'
     # via secretstorage
 cuda-bindings==13.2.0 ; sys_platform == 'linux'
     # via torch

@@ -2,7 +2,7 @@
 #    uv export --no-hashes --format requirements-txt
 absl-py==2.4.0
     # via tensorboard
-anyio==4.13.0
+anyio==4.14.2
     # via httpx
 build==1.5.0
     # via poetry
